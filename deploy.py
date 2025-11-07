@@ -76,7 +76,7 @@ address=transactionreceipt.contractAddress
 print("Smart Contract Address: ",address)
 #Fetching Smart Contract Address
 testverificationcontract=w3.eth.contract(address=transactionreceipt.contractAddress, abi=abi)
-print(testverificationcontract.functions.isVerified("0xCEaaa7a684f5FBBDF41B865e2945142340D82029").call())
+'''print(testverificationcontract.functions.isVerified("0xCEaaa7a684f5FBBDF41B865e2945142340D82029").call())'''
 
 balance = w3.eth.get_balance(MYADDRESS)
 print("Balance:", w3.from_wei(balance, "ether"), "DEV")
