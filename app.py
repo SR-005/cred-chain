@@ -35,6 +35,23 @@ def deploysmartcontract():                                  #deployment function
     '''global contract
     contract='0x7B87314c1975ba20ff93b931f3aEA7779098fA13'   '''
 
+BUILDERS_FILE = "builders.json"
+
+def load_builders():
+    global KNOWN_BUILDERS
+    if os.path.exists(BUILDERS_FILE):
+        with open(BUILDERS_FILE, "r") as f:
+            KNOWN_BUILDERS = set(json.load(f))
+    else:
+        KNOWN_BUILDERS = set()
+
+def save_builders():
+    with open(BUILDERS_FILE, "w") as f:
+        json.dump(list(KNOWN_BUILDERS), f)
+
+load_builders()
+
+
 PENDING_FILE = "pending.json"
 def load_pending():
     global PENDING_PROJECTS
@@ -121,6 +138,7 @@ def submit_project():
     """
     data = request.get_json()
     wallet = data.get("wallet")
+    client = data.get("client")
     link = data.get("link")
     deploysmartcontract()
     if not wallet or not link:
@@ -144,7 +162,7 @@ def submit_project():
 
     # Call addProject
     try:
-        feature = contract.functions.addProject(Web3.to_checksum_address(wallet), h, link)
+        feature = contract.functions.addProject(Web3.to_checksum_address(wallet),Web3.to_checksum_address(client), h, link)
         receipt = callfeature(feature)
         print("Github user verification: ", receipt)
     except Exception as e:
@@ -160,7 +178,8 @@ def submit_project():
     load_pending()  # Load existing pending projects
     PENDING_PROJECTS.append({"user": wallet, "link": link, "hash": h, "index": index})
     save_pending()  # Save updated pending list
-
+    KNOWN_BUILDERS.add(wallet)
+    save_builders()
     return jsonify({"status": "added", "tx": receipt.transactionHash.hex(), "index": index})
 
 
@@ -222,6 +241,42 @@ def mint_manual():
         return jsonify({"tx": receipt.transactionHash.hex()})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
+
+#-----------------------------------------------------------CLIENT PROJECTS-----------------------------------------------------------
+@app.route("/get_projects_for_client/<wallet>")
+def get_projects_for_client(wallet):
+    deploysmartcontract()
+    projects = []
+    # Iterate through all known builders (or fetch from DB if stored)
+    for builder in KNOWN_BUILDERS:  # you can track builders in a set
+        count = contract.functions.getProjectCount(Web3.to_checksum_address(builder)).call()
+        for i in range(count):
+            p = contract.functions.getProject(Web3.to_checksum_address(builder), i).call()
+            if Web3.to_checksum_address(p[0]) == Web3.to_checksum_address(wallet):  # client matches
+                projects.append({
+                    "builder": builder,
+                    "link": p[2],
+                    "verified": p[3]
+                })
+    return jsonify(projects)
+
+
+#-----------------------------------------------------------REVIEW-----------------------------------------------------------
+@app.route("/submit_review", methods=["POST"])
+def submit_review():
+    data = request.get_json()
+    freelancer = data.get("freelancer")
+    rating = int(data.get("rating"))
+    comment_hash = data.get("comment_hash")  # optional IPFS comment link
+
+    fn = contract.functions.submitReview(
+        Web3.to_checksum_address(freelancer),
+        rating,
+        comment_hash
+    )
+    receipt = callfeature(fn)
+    return jsonify({"tx": receipt.transactionHash.hex()})
 
 
 if __name__=="__main__":

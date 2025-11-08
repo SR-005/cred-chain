@@ -15,9 +15,22 @@
   <button id="verify">Verify</button>
 
   <hr>
-  <h3>Submit Project</h3>
+  <h3>Submit Project (Builder)</h3>
   <input id="proj" placeholder="https://raw.githubusercontent.com/..."/>
+  <input id="client" placeholder="0xClientWalletAddress"/>
   <button id="submit">Submit Project</button>
+
+  <hr>
+  <h3>Client: View My Projects</h3>
+  <button id="viewClientProjects">View My Projects</button>
+  <pre id="clientProjects"></pre>
+
+  <hr>
+  <h3>Client: Submit Review</h3>
+  <input id="freelancer" placeholder="0xFreelancerWallet"/>
+  <input id="rating" type="number" placeholder="Rating (1-5)" min="1" max="5"/>
+  <input id="comment" placeholder="Comment IPFS hash (optional)"/>
+  <button id="submitReview">Submit Review</button>
 
   <hr>
   <h3>Admin: Run Pending Verifications</h3>
@@ -48,7 +61,7 @@ document.getElementById('verify').onclick = async () => {
   if (!account) return alert('Connect first');
   const profile = document.getElementById('profile').value;
   const res = await fetch('http://localhost:5000/verify_user', {
-    method:'POST',
+    method: 'POST',
     headers: {'Content-Type':'application/json'},
     body: JSON.stringify({wallet: account, profile_link: profile})
   });
@@ -56,23 +69,49 @@ document.getElementById('verify').onclick = async () => {
   alert(JSON.stringify(data, null, 2));
 };
 
-// -------- Submit Project --------
+// -------- Submit Project (Builder) --------
 document.getElementById('submit').onclick = async () => {
   if (!account) return alert('Connect first');
-  const link = document.getElementById('proj').value;
+  const link = document.getElementById('proj').value.trim();
+  const client = document.getElementById('client').value.trim();
+  if (!client) return alert('Enter client wallet address');
   const res = await fetch('http://localhost:5000/submit_project', {
-    method:'POST',
+    method: 'POST',
     headers: {'Content-Type':'application/json'},
-    body: JSON.stringify({wallet: account, link})
+    body: JSON.stringify({wallet: account, client, link})
   });
   const data = await res.json();
-  alert(JSON.stringify(data, null, 2));
+  alert('Project Submission Result:\n' + JSON.stringify(data, null, 2));
+};
+
+// -------- Client: View My Projects --------
+document.getElementById('viewClientProjects').onclick = async () => {
+  if (!account) return alert('Connect first');
+  const res = await fetch(`http://localhost:5000/get_projects_for_client/${account}`);
+  const data = await res.json();
+  document.getElementById('clientProjects').innerText = JSON.stringify(data, null, 2);
+};
+
+// -------- Client: Submit Review --------
+document.getElementById('submitReview').onclick = async () => {
+  if (!account) return alert('Connect first');
+  const freelancer = document.getElementById('freelancer').value.trim();
+  const rating = parseInt(document.getElementById('rating').value);
+  const comment_hash = document.getElementById('comment').value.trim();
+  if (!freelancer || !rating) return alert('Enter freelancer and rating');
+  const res = await fetch('http://localhost:5000/submit_review', {
+    method: 'POST',
+    headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({freelancer, rating, comment_hash})
+  });
+  const data = await res.json();
+  alert('Review Result:\n' + JSON.stringify(data, null, 2));
 };
 
 // -------- Run Verify Pending (Admin only) --------
 document.getElementById('runPending').onclick = async () => {
   const res = await fetch('http://localhost:5000/run_verify_pending', {
-    method:'POST',
+    method: 'POST',
     headers: {'Content-Type':'application/json'}
   });
   const data = await res.json();
@@ -81,10 +120,10 @@ document.getElementById('runPending').onclick = async () => {
 
 // -------- Mint Badge Manually (Admin only) --------
 document.getElementById('mintManual').onclick = async () => {
-  const wallet = document.getElementById('mintWallet').value;
-  const uri = document.getElementById('mintURI').value;
+  const wallet = document.getElementById('mintWallet').value.trim();
+  const uri = document.getElementById('mintURI').value.trim();
   const res = await fetch('http://localhost:5000/mint_manual', {
-    method:'POST',
+    method: 'POST',
     headers: {'Content-Type':'application/json'},
     body: JSON.stringify({wallet, uri})
   });

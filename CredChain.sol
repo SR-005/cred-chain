@@ -7,6 +7,7 @@ import "./node_modules/@openzeppelin/contracts/access/Ownable.sol";
 
 contract CredChain is ERC721URIStorage, Ownable {
     struct Project {
+        address client;
         string projectHash; // SHA-256 hex
         string link;        // IPFS/GitHub link
         bool verified;
@@ -41,11 +42,12 @@ contract CredChain is ERC721URIStorage, Ownable {
     }
 
     // Add project (backend should call this after computing hash)
-    function addProject(address user, string calldata projectHash, string calldata link) external onlyOwner {
-        require(verifiedUsers[user], "User not verified");
-        userProjects[user].push(Project(projectHash, link, false));
-        emit ProjectAdded(user, userProjects[user].length - 1, projectHash, link);
-    }
+    function addProject(address user, address client,string calldata projectHash, string calldata link) external onlyOwner {
+    require(verifiedUsers[user], "User not verified");
+    userProjects[user].push(Project(client, projectHash, link, false));
+    emit ProjectAdded(user, userProjects[user].length - 1, projectHash, link);
+}
+
 
     // Backend (verifier) sets project verified flag
     function verifyProject(address user, uint index, bool status) external onlyOwner {
