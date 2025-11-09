@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              'primary-dark': 'rgb(12, 43, 78)', // Dark Blue BG
+              'primary': 'rgb(26, 61, 100)',  // Lighter Blue Button
+              'light': '#FFFFFF',             // White
+              'light-muted': '#E0E0E0',      // Light gray for text
+            }
+          }
+        }
+      }
+    </script>
+    
+    <title>{% block title %}Chain-Cred{% endblock %}</title>
+</head>
+<body class="bg-primary-dark text-light font-sans">
+
+    <nav class="container mx-auto px-6 py-6 flex justify-between items-center">
+        <a href="/" class="text-3xl font-bold text-light">
+            Chain-Cred
+        </a>
+        
+        <div class="hidden md:flex space-x-8 items-center font-medium">
+            <a href="/" class="text-light hover:text-light-muted transition">HOME</a>
+            <a href="#" class="text-light hover:text-light-muted transition">ABOUT</a>
+            <a href="#" class="text-light hover:text-light-muted transition">HIRE</a>
+            <a href="#" class="text-light hover:text-light-muted transition">FIND JOBS</a>
+            <a href="#" id="connect" class="bg-primary text-light font-semibold py-2 px-6 rounded-lg hover:bg-opacity-90 transition">
+                CONNECT WALLET
+            </a>
+            <div id="addr" class="text-light-muted text-sm hidden"></div>
+        </div>
+    </nav>
+
+    <main>
+        {% block content %}{% endblock %}
+    </main>
+
+    <script src="{{ url_for('static', filename='js/app.js') }}" defer></script>
+    
+    <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
+    <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
+
+</body>
+</html>
