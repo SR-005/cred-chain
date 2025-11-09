@@ -21,7 +21,7 @@ CORS(app)
 
 @app.route('/')
 def home():
-    return render_template('index.html')
+    return render_template('home.html')
 
 def deploysmartcontract():                                  #deployment function call
     '''contractaddress,abi=depoly_contract()'''              
