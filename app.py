@@ -331,6 +331,72 @@ def get_project_with_reviews():
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+    
+# ----------------------------------------------------------- FREELANCER PROFILE SYSTEM -----------------------------------------------------------
+PROFILES_FILE = "profiles.json"
+
+# Load or initialize profiles
+def load_profiles():
+    global PROFILES
+    if os.path.exists(PROFILES_FILE):
+        with open(PROFILES_FILE, "r") as f:
+            PROFILES = json.load(f)
+    else:
+        PROFILES = {}
+
+def save_profiles():
+    with open(PROFILES_FILE, "w") as f:
+        json.dump(PROFILES, f, indent=2)
+
+load_profiles()
+
+# ---------------- Create or Update Freelancer Profile ----------------
+@app.route("/create_profile", methods=["POST"])
+def create_profile():
+    """
+    Request JSON Example:
+    {
+        "wallet": "0xFreelancerWallet",
+        "name": "John Doe",
+        "bio": "Blockchain developer and data scientist.",
+        "skills": ["Solidity", "Python", "Flask"],
+        "github": "https://github.com/johndoe",
+        "linkedin": "https://linkedin.com/in/johndoe",
+        "profile_pic": "ipfs://QmHash..."
+    }
+    """
+    data = request.get_json()
+    wallet = data.get("wallet")
+
+    if not wallet:
+        return jsonify({"error": "wallet required"}), 400
+
+    # Normalize wallet (lowercase for key consistency)
+    wallet = wallet.lower()
+
+    # Update or create
+    PROFILES[wallet] = {
+        "name": data.get("name", ""),
+        "bio": data.get("bio", ""),
+        "skills": data.get("skills", []),
+        "github": data.get("github", ""),
+        "linkedin": data.get("linkedin", ""),
+        "profile_pic": data.get("profile_pic", "")
+    }
+
+    save_profiles()
+    return jsonify({"status": "Profile saved", "wallet": wallet})
+
+# ---------------- Get Freelancer Profile ----------------
+@app.route("/get_profile/<wallet>", methods=["GET"])
+def get_profile(wallet):
+    wallet = wallet.lower()
+    load_profiles()
+
+    if wallet not in PROFILES:
+        return jsonify({"error": "Profile not found"}), 404
+
+    return jsonify(PROFILES[wallet])
 
 if __name__=="__main__":
     app.run(debug=True)

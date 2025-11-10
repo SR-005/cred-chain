@@ -2,41 +2,117 @@
 <html>
 <head>
   <meta charset="utf-8">
-  <title>CredChain Demo</title>
+  <title>CredChain – Freelancer Dashboard</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #0a0a0a;
+      color: #e0e0e0;
+      text-align: center;
+      margin: 0;
+      padding: 30px;
+    }
+    h2, h3 {
+      color: #00ffc8;
+      margin-bottom: 10px;
+    }
+    button {
+      background-color: #00ffc8;
+      color: #000;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 8px;
+      cursor: pointer;
+      margin: 8px;
+      font-weight: bold;
+      transition: 0.2s;
+    }
+    button:hover { background-color: #00cba1; }
+    input, textarea {
+      padding: 8px;
+      margin: 5px;
+      width: 300px;
+      border-radius: 6px;
+      border: none;
+      background: #111;
+      color: #e0e0e0;
+    }
+    textarea { width: 400px; height: 80px; }
+    pre {
+      text-align: left;
+      width: 80%;
+      margin: 20px auto;
+      background: #111;
+      padding: 15px;
+      border-radius: 10px;
+      overflow-x: auto;
+      color: #0f0;
+    }
+    .section {
+      border: 1px solid #222;
+      padding: 15px;
+      margin: 20px auto;
+      width: 80%;
+      border-radius: 12px;
+      background: #121212;
+    }
+  </style>
 </head>
 <body>
-  <h2>CredChain (Demo)</h2>
-  <button id="connect">Connect MetaMask</button>
+
+  <h2>CredChain – Freelancer Dashboard</h2>
+  <button id="connect">🔗 Connect MetaMask</button>
   <div id="addr"></div>
 
+  <!-- ------------------ PROFILE SECTION ------------------ -->
+  <div class="section">
+    <h3>🧑‍💻 My Profile</h3>
+    <input id="name" placeholder="Full Name"><br>
+    <textarea id="bio" placeholder="Short Bio"></textarea><br>
+    <input id="skills" placeholder="Skills (comma-separated, e.g., Solidity, Flask)"><br>
+    <input id="github" placeholder="GitHub Profile URL"><br>
+    <input id="linkedin" placeholder="LinkedIn Profile URL"><br>
+    <input id="profile_pic" placeholder="Profile Pic IPFS URI (optional)"><br>
+    <button id="saveProfile">Save / Update Profile</button>
+    <button id="loadProfile">View My Profile</button>
+    <pre id="profileData"></pre>
+  </div>
+
   <hr>
+
   <h3>Verify Identity (GitHub/LinkedIn)</h3>
-  <input id="profile" placeholder="https://github.com/username"/>
+  <input id="profileLink" placeholder="https://github.com/username"/>
   <button id="verify">Verify</button>
 
   <hr>
+
   <h3>Submit Project (Builder)</h3>
   <input id="proj" placeholder="https://raw.githubusercontent.com/..."/>
   <input id="client" placeholder="0xClientWalletAddress"/>
   <button id="submit">Submit Project</button>
 
   <hr>
+
   <h3>Client: View My Projects</h3>
   <button id="viewClientProjects">View My Projects</button>
   <pre id="clientProjects"></pre>
 
   <hr>
+
   <h3>Client: Submit Review</h3>
   <input id="freelancer" placeholder="0xFreelancerWallet"/>
+  <input id="projectIndex" type="number" placeholder="Project Index" min="0"/>
   <input id="rating" type="number" placeholder="Rating (1-5)" min="1" max="5"/>
   <input id="comment" placeholder="Comment IPFS hash (optional)"/>
   <button id="submitReview">Submit Review</button>
 
   <hr>
+
   <h3>Admin: Run Pending Verifications</h3>
   <button id="runPending">Run Verify Pending</button>
 
   <hr>
+
   <h3>Admin: Manual Badge Mint</h3>
   <input id="mintWallet" placeholder="0xUserWalletAddress"/>
   <input id="mintURI" placeholder="ipfs://BadgeURI"/>
@@ -51,15 +127,55 @@ document.getElementById('connect').onclick = async () => {
     const accs = await ethereum.request({ method: 'eth_requestAccounts' });
     account = accs[0];
     document.getElementById('addr').innerText = 'Connected: ' + account;
+
+    // Auto-load profile if exists
+    loadProfile();
   } else {
     alert('Install MetaMask');
   }
 };
 
+// ----------------- PROFILE MANAGEMENT -----------------
+async function loadProfile() {
+  if (!account) return;
+  try {
+    const res = await fetch(`http://localhost:5000/get_profile/${account}`);
+    if (res.ok) {
+      const data = await res.json();
+      document.getElementById('profileData').innerText = JSON.stringify(data, null, 2);
+    } else {
+      document.getElementById('profileData').innerText = "No profile found.";
+    }
+  } catch (err) {
+    console.error(err);
+  }
+}
+
+document.getElementById('loadProfile').onclick = loadProfile;
+
+document.getElementById('saveProfile').onclick = async () => {
+  if (!account) return alert('Connect wallet first');
+  const name = document.getElementById('name').value;
+  const bio = document.getElementById('bio').value;
+  const skills = document.getElementById('skills').value.split(',').map(s => s.trim());
+  const github = document.getElementById('github').value;
+  const linkedin = document.getElementById('linkedin').value;
+  const profile_pic = document.getElementById('profile_pic').value;
+
+  const res = await fetch('http://localhost:5000/create_profile', {
+    method: 'POST',
+    headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({wallet: account, name, bio, skills, github, linkedin, profile_pic})
+  });
+  const data = await res.json();
+  alert('Profile Updated:\n' + JSON.stringify(data, null, 2));
+  loadProfile();
+};
+
 // -------- Verify User --------
 document.getElementById('verify').onclick = async () => {
   if (!account) return alert('Connect first');
-  const profile = document.getElementById('profile').value;
+  const profile = document.getElementById('profileLink').value;
   const res = await fetch('http://localhost:5000/verify_user', {
     method: 'POST',
     headers: {'Content-Type':'application/json'},
@@ -96,14 +212,19 @@ document.getElementById('viewClientProjects').onclick = async () => {
 document.getElementById('submitReview').onclick = async () => {
   if (!account) return alert('Connect first');
   const freelancer = document.getElementById('freelancer').value.trim();
+  const project_index = parseInt(document.getElementById('projectIndex').value);
   const rating = parseInt(document.getElementById('rating').value);
   const comment_hash = document.getElementById('comment').value.trim();
-  if (!freelancer || !rating) return alert('Enter freelancer and rating');
+
+  if (!freelancer || isNaN(project_index) || isNaN(rating))
+    return alert('Enter all required fields');
+
   const res = await fetch('http://localhost:5000/submit_review', {
     method: 'POST',
     headers: {'Content-Type':'application/json'},
-    body: JSON.stringify({freelancer, rating, comment_hash})
+    body: JSON.stringify({freelancer, project_index, rating, comment_hash})
   });
+
   const data = await res.json();
   alert('Review Result:\n' + JSON.stringify(data, null, 2));
 };

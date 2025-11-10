@@ -34,19 +34,9 @@
     input {
       padding: 8px;
       margin: 5px;
-      width: 300px;
+      width: 250px;
       border-radius: 6px;
       border: none;
-    }
-    pre {
-      text-align: left;
-      width: 80%;
-      margin: 20px auto;
-      background: #111;
-      padding: 15px;
-      border-radius: 10px;
-      overflow-x: auto;
-      color: #0f0;
     }
     .section {
       border: 1px solid #222;
@@ -55,6 +45,33 @@
       width: 80%;
       border-radius: 12px;
       background: #121212;
+    }
+    .project-card {
+      border: 1px solid #333;
+      padding: 15px;
+      margin: 15px auto;
+      width: 80%;
+      text-align: left;
+      border-radius: 10px;
+      background: #1a1a1a;
+    }
+    .review-form {
+      margin-top: 10px;
+      background: #0f0f0f;
+      padding: 10px;
+      border-radius: 8px;
+    }
+    a {
+      color: #00ffc8;
+    }
+    .already-reviewed {
+      background: #002a1f;
+      color: #00ffc8;
+      padding: 10px;
+      border-radius: 8px;
+      margin-top: 10px;
+      font-weight: bold;
+      text-align: center;
     }
   </style>
 </head>
@@ -65,26 +82,8 @@
   <div id="addr"></div>
 
   <div class="section">
-    <h2>📁 View My Assigned Projects</h2>
-    <button id="viewProjects">View My Projects</button>
-    <pre id="projects"></pre>
-  </div>
-
-  <div class="section">
-    <h2>⭐ Submit Review</h2>
-    <input id="freelancer" placeholder="Freelancer Wallet (0x...)" /><br>
-    <input id="projectIndex" type="number" placeholder="Project Index" /><br>
-    <input id="rating" type="number" placeholder="Rating (1–5)" min="1" max="5" /><br>
-    <input id="comment" placeholder="Comment Hash / Feedback (optional)" /><br>
-    <button id="submitReview">Submit Review</button>
-  </div>
-
-  <div class="section">
-    <h2>🔍 View Project + Reviews</h2>
-    <input id="builder" placeholder="Builder Wallet (0x...)" /><br>
-    <input id="indexView" type="number" placeholder="Project Index" /><br>
-    <button id="viewProjectDetails">View Details</button>
-    <pre id="projectDetails"></pre>
+    <h2>📁 My Assigned Projects + Reviews</h2>
+    <div id="projects">Connect wallet to load your projects...</div>
   </div>
 
 <script>
@@ -96,51 +95,106 @@ document.getElementById('connect').onclick = async () => {
     const accs = await ethereum.request({ method: 'eth_requestAccounts' });
     account = accs[0];
     document.getElementById('addr').innerText = 'Connected: ' + account;
+    loadClientProjects(); // Auto-load projects once connected
   } else {
     alert('Install MetaMask first.');
   }
 };
 
-// -------- View Assigned Projects --------
-document.getElementById('viewProjects').onclick = async () => {
-  if (!account) return alert('Connect wallet first');
-  const res = await fetch(`http://localhost:5000/get_projects_for_client/${account}`);
-  const data = await res.json();
-  document.getElementById('projects').innerText = JSON.stringify(data, null, 2);
-};
+// -------- Automatically Load All Projects + Reviews for Connected Client --------
+async function loadClientProjects() {
+  try {
+    document.getElementById('projects').innerText = "Fetching your projects...";
 
-// -------- Submit Review --------
-document.getElementById('submitReview').onclick = async () => {
-  if (!account) return alert('Connect wallet first');
-  const freelancer = document.getElementById('freelancer').value.trim();
-  const project_index = parseInt(document.getElementById('projectIndex').value);
-  const rating = parseInt(document.getElementById('rating').value);
-  const comment_hash = document.getElementById('comment').value.trim();
+    const projectsRes = await fetch(`http://localhost:5000/get_projects_for_client/${account}`);
+    const projectsData = await projectsRes.json();
 
-  if (!freelancer || isNaN(project_index) || isNaN(rating))
-    return alert('Enter all required fields');
+    if (!projectsData.length) {
+      document.getElementById('projects').innerText = "No projects found for this client wallet.";
+      return;
+    }
+
+    let html = "";
+    let projectCount = 0;
+
+    // For each project, get full details + reviews
+    for (const [index, proj] of projectsData.entries()) {
+      const builder = proj.builder;
+      const idx = proj.index ?? index;
+
+      try {
+        const detailRes = await fetch(
+          `http://localhost:5000/get_project_with_reviews?builder=${builder}&index=${idx}`
+        );
+        const detail = await detailRes.json();
+        projectCount++;
+
+        // Check if this client has already submitted a review
+        let hasReviewed = false;
+        if (detail.reviews && Array.isArray(detail.reviews)) {
+          hasReviewed = detail.reviews.some(r => r.reviewer?.toLowerCase() === account.toLowerCase());
+        }
+
+        html += `
+        <div class="project-card" id="project-${builder}-${idx}">
+          <h3>Project #${projectCount}</h3>
+          <b>Builder:</b> ${builder}<br>
+          <b>Client:</b> ${detail.client}<br>
+          <b>Link:</b> <a href="${detail.link}" target="_blank">${detail.link}</a><br>
+          <b>Verified:</b> ${detail.verified ? "✅ Yes" : "❌ No"}<br>
+          <b>Project Hash:</b> ${detail.projectHash}<br>
+          <b>Reviews:</b><br>
+          <pre style="background:#0e0e0e; color:#0f0; padding:8px; border-radius:8px;">${JSON.stringify(detail.reviews, null, 2)}</pre>
+        `;
+
+        if (!hasReviewed) {
+          // Show review form only if not yet reviewed by this client
+          html += `
+            <div class="review-form">
+              <h4>Leave a Review:</h4>
+              <input id="rating-${builder}-${idx}" type="number" placeholder="Rating (1–5)" min="1" max="5" />
+              <input id="comment-${builder}-${idx}" placeholder="Comment Hash / Feedback" />
+              <button onclick="submitReview('${builder}', ${idx})">Submit Review</button>
+            </div>`;
+        } else {
+          html += `
+            <div class="already-reviewed">✅ You have already reviewed this project.</div>`;
+        }
+
+        html += `</div>`;
+      } catch (err) {
+        console.error(`Error fetching details for ${builder}`, err);
+      }
+    }
+
+    document.getElementById('projects').innerHTML = html;
+
+  } catch (err) {
+    console.error(err);
+    document.getElementById('projects').innerText = "Error loading projects.";
+  }
+}
+
+// -------- Submit Review for a Specific Project --------
+async function submitReview(freelancer, projectIndex) {
+  if (!account) return alert('Connect wallet first');
+  const rating = parseInt(document.getElementById(`rating-${freelancer}-${projectIndex}`).value);
+  const comment_hash = document.getElementById(`comment-${freelancer}-${projectIndex}`).value.trim();
+
+  if (isNaN(rating)) return alert("Enter a valid rating (1–5)");
 
   const res = await fetch('http://localhost:5000/submit_review', {
     method: 'POST',
     headers: {'Content-Type': 'application/json'},
-    body: JSON.stringify({freelancer, project_index, rating, comment_hash})
+    body: JSON.stringify({freelancer, project_index: projectIndex, rating, comment_hash})
   });
 
   const data = await res.json();
-  alert('Review Result:\n' + JSON.stringify(data, null, 2));
-};
-
-// -------- View Project with Reviews --------
-document.getElementById('viewProjectDetails').onclick = async () => {
-  const builder = document.getElementById('builder').value.trim();
-  const index = parseInt(document.getElementById('indexView').value);
-  if (!builder || isNaN(index)) return alert('Enter builder address and project index');
-
-  // Use the smart contract’s view function via Flask (add endpoint if needed)
-  const res = await fetch(`http://localhost:5000/get_project_with_reviews?builder=${builder}&index=${index}`);
-  const data = await res.json();
-  document.getElementById('projectDetails').innerText = JSON.stringify(data, null, 2);
-};
+  if (data.error) alert(`❌ ${data.error}`);
+  else alert(`✅ Review submitted for ${freelancer} (Project ${projectIndex})\nTX: ${data.tx}`);
+  
+  loadClientProjects(); // Refresh to hide review form
+}
 </script>
 
 </body>
