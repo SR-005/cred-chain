@@ -1,0 +1,119 @@
+{% extends "main.html" %}
+
+{% block title %}My Profile | Chain-Cred{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-primary-dark text-light py-12 px-4 sm:px-6 lg:px-8 flex flex-col items-center">
+    
+    <!-- Main Profile Container -->
+    <div class="w-full max-w-4xl space-y-8">
+        
+        <!-- 1. PROFILE EDITOR SECTION -->
+        <div class="bg-primary rounded-2xl shadow-2xl border border-gray-700 overflow-hidden">
+            <!-- Header -->
+            <div class="px-8 py-6 border-b border-gray-700 bg-opacity-50">
+                <h3 class="text-2xl font-bold flex items-center gap-2">
+                    🧑‍💻 My Profile
+                </h3>
+                <p class="text-light-muted text-sm mt-1">Manage your professional identity on the blockchain.</p>
+            </div>
+
+            <!-- Form Content -->
+            <div class="p-8 grid grid-cols-1 md:grid-cols-2 gap-6">
+                
+                <!-- Full Name -->
+                <div class="col-span-1 md:col-span-1">
+                    <label for="name" class="block text-sm font-medium text-light-muted mb-2">Full Name</label>
+                    <input type="text" id="name" placeholder="e.g. John Doe" 
+                        class="w-full bg-primary-dark border border-gray-600 text-light rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200 placeholder-gray-500">
+                </div>
+
+                <!-- Email Address -->
+                <div class="col-span-1 md:col-span-1">
+                    <label for="email" class="block text-sm font-medium text-light-muted mb-2">Email Address</label>
+                    <input type="email" id="email" placeholder="john@example.com" 
+                        class="w-full bg-primary-dark border border-gray-600 text-light rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200 placeholder-gray-500">
+                </div>
+
+                <!-- Bio (Full Width) -->
+                <div class="col-span-1 md:col-span-2">
+                    <label for="bio" class="block text-sm font-medium text-light-muted mb-2">Short Bio</label>
+                    <textarea id="bio" rows="3" placeholder="Blockchain enthusiast and Full Stack Developer..." 
+                        class="w-full bg-primary-dark border border-gray-600 text-light rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200 placeholder-gray-500"></textarea>
+                </div>
+
+                <!-- Skills (Full Width) -->
+                <div class="col-span-1 md:col-span-2">
+                    <label for="skills" class="block text-sm font-medium text-light-muted mb-2">Skills</label>
+                    <input type="text" id="skills" placeholder="Python, Solidity, React, Tailwind (comma-separated)" 
+                        class="w-full bg-primary-dark border border-gray-600 text-light rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200 placeholder-gray-500">
+                </div>
+
+                <!-- LinkedIn URL -->
+                <div class="col-span-1 md:col-span-1">
+                    <label for="linkedin" class="block text-sm font-medium text-light-muted mb-2">LinkedIn URL</label>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <span class="text-gray-400">🔗</span>
+                        </div>
+                        <input type="text" id="linkedin" placeholder="linkedin.com/in/username" 
+                            class="w-full bg-primary-dark border border-gray-600 text-light rounded-lg pl-10 pr-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200 placeholder-gray-500">
+                    </div>
+                </div>
+
+                <!-- Phone Number -->
+                <div class="col-span-1 md:col-span-1">
+                    <label for="phone" class="block text-sm font-medium text-light-muted mb-2">Phone Number</label>
+                    <input type="tel" id="phone" placeholder="+1 234 567 890" 
+                        class="w-full bg-primary-dark border border-gray-600 text-light rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200 placeholder-gray-500">
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="px-8 py-6 bg-opacity-50 bg-primary-dark flex flex-col sm:flex-row gap-4 justify-end">
+                <button id="loadProfile" class="px-6 py-2.5 rounded-lg border border-blue-500 text-blue-400 font-semibold hover:bg-blue-500 hover:text-white transition duration-300 ease-in-out">
+                    View My Profile
+                </button>
+                <button id="saveProfile" class="px-6 py-2.5 rounded-lg bg-blue-600 text-white font-bold shadow-lg hover:bg-blue-500 hover:shadow-blue-500/50 transform hover:-translate-y-0.5 transition duration-300 ease-in-out">
+                    Save / Update Profile
+                </button>
+            </div>
+
+            <!-- Profile Display Area (Hidden by default, toggled via JS) -->
+            <div id="profileDisplay" class="hidden px-8 py-6 border-t border-gray-700 bg-primary-dark">
+                <!-- Dynamic Content will be injected here -->
+            </div>
+        </div>
+
+        <!-- 2. IDENTITY VERIFICATION SECTION -->
+        <div class="bg-primary rounded-2xl shadow-2xl border border-gray-700 p-8 flex flex-col md:flex-row items-center gap-6">
+            <div class="flex-shrink-0">
+                <div class="w-16 h-16 bg-gray-800 rounded-full flex items-center justify-center text-3xl">
+                    🐱
+                </div>
+            </div>
+            <div class="flex-grow w-full">
+                <h3 class="text-xl font-bold mb-2">Verify Identity (GitHub)</h3>
+                <p class="text-light-muted text-sm mb-4">Link your GitHub account to earn the "Verified Developer" badge on chain.</p>
+                
+                <div class="flex flex-col sm:flex-row gap-3">
+                    <input id="profileLink" type="text" placeholder="https://github.com/username" 
+                        class="flex-grow bg-primary-dark border border-gray-600 text-light rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition duration-200 placeholder-gray-500">
+                    
+                    <button id="verify" class="px-8 py-3 rounded-lg bg-green-600 text-white font-bold shadow-lg hover:bg-green-500 hover:shadow-green-500/50 transform hover:-translate-y-0.5 transition duration-300 ease-in-out whitespace-nowrap">
+                        Verify
+                    </button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<!-- 
+    SCRIPT LINK:
+    The inline script has been removed and replaced by this link.
+    It uses Flask's 'url_for' to correctly find the file in your 'static' folder.
+-->
+<script src="{{ url_for('static', filename='js/profile_editpage.js') }}"></script>
+{% endblock %}

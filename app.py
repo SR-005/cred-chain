@@ -8,6 +8,7 @@ from flask import Flask,jsonify,render_template,request
 from flask_cors import CORS
 from web3 import Web3
 from deploy import depoly_contract
+from routes import routes 
 
 load_dotenv()
 MYADDRESS = Web3.to_checksum_address(os.getenv("METAMASK"))
@@ -18,6 +19,8 @@ chainid=1287
 
 app = Flask(__name__)
 CORS(app) 
+app.register_blueprint(routes) 
+
 
 @app.route('/')
 def home():

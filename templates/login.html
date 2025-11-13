@@ -1,0 +1,164 @@
+{% extends "main.html" %}
+
+{% block title %}Login | Chain-Cred{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-primary-dark text-light flex items-center justify-center p-4 sm:p-6 lg:p-8">
+    <div class="w-full max-w-xl bg-primary rounded-2xl shadow-2xl border border-gray-700 overflow-hidden transform transition-all duration-300 ease-in-out hover:scale-[1.01]">
+        
+        <div class="p-6 border-b border-gray-700 text-center">
+            <h1 class="text-3xl font-bold mb-2">Welcome to Chain-Cred</h1>
+            <p class="text-light-muted mb-6">Choose your role to get started.</p>
+
+            <div class="flex justify-center space-x-4 mb-4">
+                <label class="inline-flex items-center cursor-pointer group">
+                    <input type="radio" name="role" value="employer" class="peer hidden" checked>
+                    <span class="px-6 py-2 rounded-full text-light-muted bg-primary-dark transition-all duration-300 ease-in-out 
+                                  peer-checked:bg-blue-600 peer-checked:text-white peer-checked:shadow-lg 
+                                  group-hover:bg-blue-700 group-hover:text-white">
+                        <ion-icon name="briefcase-outline" class="text-lg align-middle mr-1"></ion-icon> Employer
+                    </span>
+                </label>
+                <label class="inline-flex items-center cursor-pointer group">
+                    <input type="radio" name="role" value="freelancer" class="peer hidden">
+                    <span class="px-6 py-2 rounded-full text-light-muted bg-primary-dark transition-all duration-300 ease-in-out 
+                                  peer-checked:bg-blue-600 peer-checked:text-white peer-checked:shadow-lg
+                                  group-hover:bg-blue-700 group-hover:text-white">
+                        <ion-icon name="person-outline" class="text-lg align-middle mr-1"></ion-icon> Freelancer
+                    </span>
+                </label>
+            </div>
+        </div>
+
+        <div class="p-8">
+            <form id="loginForm" class="space-y-6">
+                
+                <!-- === EMPLOYER FORM === -->
+                <div id="employerForm" class="space-y-6 transition-all duration-300 ease-in-out">
+                    <div>
+                        <label for="employerName" class="block text-sm font-medium text-light-muted mb-2">Employer Name <span class="text-red-500">*</span></label>
+                        <input type="text" id="employerName" name="employerName" placeholder="Acme Inc. Hiring Manager" required
+                               class="w-full bg-primary-dark border border-gray-600 text-light rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200 placeholder-gray-500">
+                    </div>
+                    <div>
+                        <label for="companyName" class="block text-sm font-medium text-light-muted mb-2">Company Name (Optional)</label>
+                        <input type="text" id="companyName" name="companyName" placeholder="Acme Corporation"
+                               class="w-full bg-primary-dark border border-gray-600 text-light rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200 placeholder-gray-500">
+                    </div>
+                    <div>
+                        <label for="preferredStack" class="block text-sm font-medium text-light-muted mb-2">Preferred Stack <span class="text-red-500">*</span></label>
+                        <select id="preferredStack" name="preferredStack" required
+                                class="w-full bg-primary-dark border border-gray-600 text-light rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200 appearance-none">
+                            <option value="" disabled selected>Select a Stack</option>
+                            <option value="MERN">MERN Stack</option>
+                            <option value="MEAN">MEAN Stack</option>
+                            <option value="NEXTJS">NEXT.js</option>
+                            <option value="XAMP">XAMP Stack</option>
+                            <option value="FullStack">Full Stack</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="employerWalletAddress" class="block text-sm font-medium text-light-muted mb-2">Wallet Address <span class="text-red-500">*</span></label>
+                        <input type="text" id="employerWalletAddress" name="employerWalletAddress" placeholder="0x..." required
+                               class="w-full bg-primary-dark border border-gray-600 text-light rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200 placeholder-gray-500">
+                    </div>
+                    <div>
+                        <label for="employerLinkedIn" class="block text-sm font-medium text-light-muted mb-2">LinkedIn Address (Optional)</label>
+                        <input type="url" id="employerLinkedIn" name="employerLinkedIn" placeholder="https://linkedin.com/in/..."
+                               class="w-full bg-primary-dark border border-gray-600 text-light rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200 placeholder-gray-500">
+                    </div>
+                </div>
+
+                <!-- === FREELANCER SECTION (WRAPPER) === -->
+                <div id="freelancerSection" class="space-y-8 hidden transition-all duration-300 ease-in-out">
+                    <!-- 1. Freelancer Form Fields -->
+                    <div id="freelancerForm" class="space-y-6">
+                        <div>
+                            <label for="freelancerName" class="block text-sm font-medium text-light-muted mb-2">Freelancer Name <span class="text-red-500">*</span></label>
+                            <input type="text" id="freelancerName" name="freelancerName" placeholder="Jane Doe" required
+                                   class="w-full bg-primary-dark border border-gray-600 text-light rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200 placeholder-gray-500">
+                        </div>
+                        <div>
+                            
+                        </div>
+                        <div>
+                            <label for="freelancerLinkedIn" class="block text-sm font-medium text-light-muted mb-2">LinkedIn Link (Optional)</label>
+                            <input type="url" id="freelancerLinkedIn" name="freelancerLinkedIn" placeholder="https://linkedin.com/in/janedoe"
+                                   class="w-full bg-primary-dark border border-gray-600 text-light rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200 placeholder-gray-500">
+                        </div>
+                        <div>
+                            <label for="freelancerStack" class="block text-sm font-medium text-light-muted mb-2">Tech Stack <span class="text-red-500">*</span></label>
+                            <select id="freelancerStack" name="freelancerStack" required
+                                    class="w-full bg-primary-dark border border-gray-600 text-light rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200 appearance-none">
+                                <option value="" disabled selected>Select your Main Stack</option>
+                                <option value="MERN">MERN Stack</option>
+                                <option value="MEAN">MEAN Stack</option>
+                                <option value="NEXTJS">NEXT.js</option>
+                                <option value="FullStack">Full Stack</option>
+                                 <option value="FullStack">Other</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="skills" class="block text-sm font-medium text-light-muted mb-2">Skills <span class="text-red-500">*</span></label>
+                            <input type="text" id="skills" name="skills" placeholder="Solidity, Python, React, UI/UX" required
+                                   class="w-full bg-primary-dark border border-gray-600 text-light rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200 placeholder-gray-500">
+                        </div>
+                        <div>
+                            <label for="emailAddress" class="block text-sm font-medium text-light-muted mb-2">Email Address <span class="text-red-500">*</span></label>
+                            <input type="email" id="emailAddress" name="emailAddress" placeholder="jane.doe@example.com" required
+                                   class="w-full bg-primary-dark border border-gray-600 text-light rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200 placeholder-gray-500">
+                        </div>
+                        <div>
+                            <label for="phoneNumber" class="block text-sm font-medium text-light-muted mb-2">Phone / Contact Number <span class="text-red-500">*</span></label>
+                            <input type="tel" id="phoneNumber" name="phoneNumber" placeholder="+1 234 567 890" required
+                                   class="w-full bg-primary-dark border border-gray-600 text-light rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200 placeholder-gray-500">
+                        </div>
+                    </div>
+
+                    <!-- 2. IDENTITY VERIFICATION SECTION (Added here) -->
+                    <div class="bg-primary rounded-2xl shadow-lg border border-gray-700 p-8 flex flex-col md:flex-row items-center gap-6">
+                        <div class="flex-shrink-0">
+                            <!-- Replaced emoji with Ionicon -->
+                            <div class="w-16 h-16 bg-gray-800 rounded-full flex items-center justify-center text-4xl text-light">
+                                <ion-icon name="logo-github"></ion-icon>
+                            </div>
+                        </div>
+                        <div class="flex-grow w-full">
+                            <h3 class="text-xl font-bold mb-2">Verify Identity (GitHub)</h3>
+                            <p class="text-light-muted text-sm mb-4">Link your GitHub account to earn the "Verified Developer" badge on chain.</p>
+                            
+                            <div class="flex flex-col sm:flex-row gap-3">
+                                <input id="profileLink" type="text" placeholder="https://github.com/username" 
+                                    class="flex-grow bg-primary-dark border border-gray-600 text-light rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition duration-200 placeholder-gray-500">
+                                
+                                <!-- Added type="button" to prevent form submission -->
+                                <button id="verifyBtn" type="button" class="px-8 py-3 rounded-lg bg-green-600 text-white font-bold shadow-lg hover:bg-green-500 hover:shadow-green-500/50 transform hover:-translate-y-0.5 transition duration-300 ease-in-out whitespace-nowrap flex items-center justify-center">
+                                    <ion-icon name="checkmark-circle-outline" class="text-lg mr-1"></ion-icon>
+                                    Verify
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- === ACTION BUTTONS (Outside of toggle forms) === -->
+                <button id="connectWalletBtn" type="button" disabled
+                        class="w-full py-3 px-4 rounded-lg bg-gray-500 text-white font-bold text-lg 
+                               hover:bg-gray-600 transition duration-300 ease-in-out cursor-not-allowed
+                               disabled:opacity-50 disabled:cursor-not-allowed
+                               enabled:bg-blue-600 enabled:hover:bg-blue-500 enabled:shadow-lg enabled:hover:shadow-blue-500/50 enabled:transform enabled:hover:-translate-y-0.5">
+                    Connect Wallet
+                </button>
+
+                <a href="#" class="block text-center text-light-muted hover:text-white transition duration-200 ease-in-out">
+                    <button type="submit" class="w-full py-3 px-4 rounded-lg bg-green-600 text-white font-bold text-lg shadow-lg hover:bg-green-500 hover:shadow-green-500/50 transform hover:-translate-y-0.5 transition duration-300 ease-in-out mt-4">
+                        Login
+                    </button>
+                </a>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script src="{{ url_for('static', filename='js/login.js') }}"></script>
+{% endblock %}
