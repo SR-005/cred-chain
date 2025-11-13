@@ -30,16 +30,25 @@ def clientpage():
 #-----------------------------------------------------------SMART CONTRACT DEPLOYMENT-----------------------------------------------------------
 def deploysmartcontract():                                  #deployment function call
     print("Contract Deployment Function Triggered")
-    '''contractaddress,abi=depoly_contract()'''      
+    contractaddress,abi=depoly_contract()  
     global contract
 
     with open("./compiledcccode.json","r") as file:
         compiledsol = json.load(file) 
     abi=compiledsol["contracts"]["chaincred.sol"]["CredChain"]["abi"]
-    contract=w3.eth.contract(address='0xC7C0851104bBfeDBa3E3a370fE051dACA2686B6F', abi=abi)
+    contract=w3.eth.contract(address=contractaddress, abi=abi)
     
-    '''global contract
-    contract='0x7B87314c1975ba20ff93b931f3aEA7779098fA13'   '''
+
+def getsmartcontract():                                  #deployment function call
+    print("Getting Contract Address")  
+    
+    with open("./compiledcccode.json","r") as file:
+        compiledsol = json.load(file) 
+    abi=compiledsol["contracts"]["chaincred.sol"]["CredChain"]["abi"]
+
+    global contract
+    contract=w3.eth.contract(address="0x644268573996Ae7c93852C140C722C0306004387", abi=abi)
+    
 
 #-----------------------------------------------------------JSON FILES-----------------------------------------------------------
 BUILDERS_FILE = "builders.json"
@@ -70,6 +79,21 @@ def save_pending():
     with open(PENDING_FILE, "w") as f:
         json.dump(PENDING_PROJECTS, f, indent=2)
 
+PROFILES_FILE = "profiles.json"
+# Load or initialize profiles
+def load_profiles():
+    global PROFILES
+    if os.path.exists(PROFILES_FILE):
+        with open(PROFILES_FILE, "r") as f:
+            PROFILES = json.load(f)
+    else:
+        PROFILES = {}
+
+def save_profiles():
+    with open(PROFILES_FILE, "w") as f:
+        json.dump(PROFILES, f, indent=2)
+
+load_profiles()
 
 #-----------------------------------------------------------CALL FUNCTIONS-----------------------------------------------------------
 def callfeature(feature):
@@ -104,6 +128,10 @@ def owner_account():
 @app.route("/verify_user", methods=["POST"])
 def verify_user():
     print("User Verification Function Triggered")
+
+    '''deploysmartcontract()'''
+    getsmartcontract()
+
     """
     Request JSON:
     { "wallet": "0x..", "profile_link": "https://github.com/..." }
@@ -113,7 +141,9 @@ def verify_user():
     print(wallet)
     link = data.get("profile_link")
     print(link)
-    deploysmartcontract()
+
+    
+
     if not wallet or not link:
         return jsonify({"error": "wallet and profile_link required"}), 400
 
@@ -129,6 +159,15 @@ def verify_user():
     try:
         setverified = contract.functions.setUserVerified(Web3.to_checksum_address(wallet), True)
         receipt = callfeature(setverified)
+
+         # Automatically store verified GitHub into user profile
+        load_profiles()
+        w = wallet.lower()
+        if w not in PROFILES:
+            PROFILES[w] = {}
+        PROFILES[w]["github"] = link  # auto-save GitHub profile
+        save_profiles()
+
         print("Github user verification: ",receipt)
         return jsonify({"verified": True, "tx": receipt.transactionHash.hex()})
     except Exception as e:
@@ -143,11 +182,13 @@ def submit_project():
     wallet = data.get("wallet")
     client = data.get("client")
     link = data.get("link")
+    name = data.get("name")
+    description = data.get("description")
+    languages = data.get("languages")
 
     if not wallet or not link or not client:
         return jsonify({"error": "wallet, client, and link required"}), 400
 
-    deploysmartcontract()
 
     # Normalize GitHub link
     if "github.com" in link and "raw.githubusercontent.com" not in link:
@@ -166,12 +207,17 @@ def submit_project():
 
     # Call addProject (auto-verifies inside contract)
     try:
-        feature = contract.functions.addProject(
-            Web3.to_checksum_address(wallet),
-            Web3.to_checksum_address(client),
-            h,
-            link
-        )
+        feature = contract.functions.addProject((
+        Web3.to_checksum_address(wallet),   # p.user
+        Web3.to_checksum_address(client),   # p.client
+        name,
+        description,
+        languages,
+        h,
+        link
+    ))
+
+
         receipt = callfeature(feature)
         print("Project added + verified automatically:", receipt)
     except Exception as e:
@@ -197,7 +243,6 @@ def submit_project():
 #-----------------------------------------------------------CLIENT PROJECTS-----------------------------------------------------------
 @app.route("/get_projects_for_client/<wallet>")
 def get_projects_for_client(wallet):
-    deploysmartcontract()
     projects = []
     # Iterate through all known builders (or fetch from DB if stored)
     for builder in KNOWN_BUILDERS:  # you can track builders in a set
@@ -222,7 +267,6 @@ def submit_review():
     rating = int(data.get("rating"))
     comment_hash = data.get("comment_hash")  # optional IPFS comment link
 
-    deploysmartcontract()
 
     fn = contract.functions.submitReview(
         Web3.to_checksum_address(freelancer),
@@ -238,19 +282,27 @@ def submit_review():
 def get_all_projects(builder):
     """Fetch all projects created by a specific builder (freelancer)."""
     try:
-        deploysmartcontract()
-        result = contract.functions.getAllProjects(Web3.to_checksum_address(builder)).call()
+        count = contract.functions.getProjectCount(builder).call()
+        projects = []
+        for i in range(count):
+            p = contract.functions.getProject(builder, i).call()
+            projects.append(p)
 
         # Format the data into readable JSON
         formatted_projects = [
             {
                 "client": p[0],
-                "projectHash": p[1],
-                "link": p[2],
-                "verified": p[3]
+                "projectName": p[1],
+                "description": p[2],
+                "languages": p[3],
+                "projectHash": p[4],
+                "link": p[5],
+                "verified": p[6],
+                "timestamp": p[7]
             }
-            for p in result
+            for p in projects
         ]
+
 
         return jsonify({
             "builder": builder,
@@ -262,12 +314,58 @@ def get_all_projects(builder):
         return jsonify({"error": str(e)}), 500
 
 
+#-----------------------------------------------------------GET PROJECT WITH REVIEWS-----------------------------------------------------------
+@app.route("/get_project_with_reviews", methods=["GET"])
+def get_project_with_reviews():
+    builder = request.args.get("builder")
+    index = request.args.get("index", type=int)
+
+    if not builder or index is None:
+        return jsonify({"error": "builder and index required"}), 400
+
+    try:
+        # Fetch full project details with all fields
+        result = contract.functions.getProjectWithReviews(
+            Web3.to_checksum_address(builder),
+            index
+        ).call()
+
+        client = result[0]
+        projectHash = result[1]
+        link = result[2]
+        verified = result[3]
+        reviews_raw = result[4]
+
+        # Format reviews
+        reviews = [
+            {
+                "reviewer": r[0],
+                "projectIndex": r[1],
+                "rating": r[2],
+                "commentHash": r[3]
+            }
+            for r in reviews_raw
+        ]
+
+        return jsonify({
+            "builder": builder,
+            "index": index,
+            "client": client,
+            "projectHash": projectHash,
+            "link": link,
+            "verified": verified,
+            "reviews": reviews
+        })
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
 # ----------------------------------------------------------- GET ALL REVIEWS (BUILDER) -----------------------------------------------------------
 @app.route("/get_all_reviews/<builder>", methods=["GET"])
 def get_all_reviews(builder):
     """Fetch all reviews received by a specific freelancer."""
     try:
-        deploysmartcontract()
         result = contract.functions.getAllReviews(Web3.to_checksum_address(builder)).call()
 
         # Format reviews for readability
@@ -290,23 +388,6 @@ def get_all_reviews(builder):
     except Exception as e:
         return jsonify({"error": str(e)}), 500
     
-# ----------------------------------------------------------- FREELANCER PROFILE SYSTEM -----------------------------------------------------------
-PROFILES_FILE = "profiles.json"
-
-# Load or initialize profiles
-def load_profiles():
-    global PROFILES
-    if os.path.exists(PROFILES_FILE):
-        with open(PROFILES_FILE, "r") as f:
-            PROFILES = json.load(f)
-    else:
-        PROFILES = {}
-
-def save_profiles():
-    with open(PROFILES_FILE, "w") as f:
-        json.dump(PROFILES, f, indent=2)
-
-load_profiles()
 
 # ---------------- Create or Update Freelancer Profile ----------------
 @app.route("/create_profile", methods=["POST"])
@@ -337,9 +418,10 @@ def create_profile():
         "name": data.get("name", ""),
         "bio": data.get("bio", ""),
         "skills": data.get("skills", []),
-        "github": data.get("github", ""),
+        "github": PROFILES[wallet].get("github", ""),
         "linkedin": data.get("linkedin", ""),
-        "profile_pic": data.get("profile_pic", "")
+        "email": data.get("email", ""),
+        "phone": data.get("phone", "")
     }
 
     save_profiles()

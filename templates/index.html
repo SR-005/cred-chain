@@ -90,9 +90,9 @@
     <input id="name" placeholder="Full Name"><br>
     <textarea id="bio" placeholder="Short Bio"></textarea><br>
     <input id="skills" placeholder="Skills (comma-separated, e.g., Solidity, Flask)"><br>
-    <input id="github" placeholder="GitHub Profile URL"><br>
     <input id="linkedin" placeholder="LinkedIn Profile URL"><br>
-    <input id="profile_pic" placeholder="Profile Pic IPFS URI (optional)"><br>
+    <input id="email" placeholder="Email Address"><br>
+    <input id="phone" placeholder="Phone Number"><br>
     <button id="saveProfile">Save / Update Profile</button>
     <button id="loadProfile">View My Profile</button>
     <div id="profileDisplay"></div>
@@ -107,6 +107,9 @@
   <hr>
 
   <h3>Submit Project (Builder)</h3>
+  <input id="proj_name" placeholder="Project Name"/>
+  <textarea id="proj_desc" placeholder="Short Description"></textarea>
+  <input id="proj_lang" placeholder="Languages (comma-separated)"/>
   <input id="proj" placeholder="https://raw.githubusercontent.com/..."/>
   <input id="client" placeholder="0xClientWalletAddress"/>
   <button id="submit">Submit Project</button>
@@ -144,22 +147,23 @@ async function loadProfile() {
     const profile = await profileRes.json();
 
     // Fetch freelancer's projects
-    const projectsRes = await fetch(`http://localhost:5000/get_projects_for_client/${account}`);
+    const projectsRes = await fetch(`http://localhost:5000/get_all_projects/${account}`);
     const allProjects = await projectsRes.json();
     const freelancerProjects = allProjects.filter(p => p.builder?.toLowerCase() === account.toLowerCase());
 
     // Build HTML
-    let html = `
-      <div class="profile-header">
-        ${profile.profile_pic ? `<img src="${profile.profile_pic}" class="profile-pic">` : ""}
-        <h3>${profile.name || "Unnamed Freelancer"}</h3>
-        <p>${profile.bio || "No bio available."}</p>
-        <p><b>Skills:</b> ${(profile.skills || []).join(", ")}</p>
-        <p>
-          ${profile.github ? `<a href="${profile.github}" target="_blank">GitHub</a>` : ""}
-          ${profile.linkedin ? ` | <a href="${profile.linkedin}" target="_blank">LinkedIn</a>` : ""}
-        </p>
-      </div>
+    let html += `
+      <div class="project-card">
+      <b>Project #${index + 1}</b><br>
+      <b>Name:</b> ${proj.projectName}<br>
+      <b>Description:</b> ${proj.description}<br>
+      <b>Languages:</b> ${proj.languages}<br>
+      <b>Client:</b> ${proj.client}<br>
+      <b>Hash:</b> ${proj.projectHash}<br>
+      <b>Link:</b> <a href="${proj.link}" target="_blank">${proj.link}</a><br>
+      <b>Verified:</b> ${proj.verified ? "✅ Yes" : "❌ No"}<br>
+      <b>Timestamp:</b> ${new Date(proj.timestamp * 1000).toLocaleString()}
+    </div>
     `;
 
     if (freelancerProjects.length > 0) {
@@ -231,19 +235,22 @@ document.getElementById('verify').onclick = async () => {
 
 // -------- Submit Project (Builder) --------
 document.getElementById('submit').onclick = async () => {
-  if (!account) return alert('Connect first');
-  const link = document.getElementById('proj').value.trim();
-  const client = document.getElementById('client').value.trim();
-  if (!client) return alert('Enter client wallet address');
+  const name = document.getElementById('proj_name').value;
+  const description = document.getElementById('proj_desc').value;
+  const languages = document.getElementById('proj_lang').value;
+  const link = document.getElementById('proj').value;
+  const client = document.getElementById('client').value;
+
   const res = await fetch('http://localhost:5000/submit_project', {
     method: 'POST',
-    headers: {'Content-Type':'application/json'},
-    body: JSON.stringify({wallet: account, client, link})
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ wallet: account, client, name, description, languages, link })
   });
+
   const data = await res.json();
-  alert('Project Submission Result:\n' + JSON.stringify(data, null, 2));
-  loadProfile(); // refresh to show new project
+  alert(JSON.stringify(data, null, 2));
 };
+
 
 </script>
 </body>

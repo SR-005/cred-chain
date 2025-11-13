@@ -4,12 +4,27 @@ pragma solidity ^0.8.17;
 import "./node_modules/@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
 import "./node_modules/@openzeppelin/contracts/access/Ownable.sol";
 
+
 contract CredChain is ERC721URIStorage, Ownable {
     struct Project {
+        address client;           
+        string projectName;       
+        string description;       
+        string languages;         
+        string projectHash;       
+        string link;              // GitHub/IPFS/other source link
+        bool verified;            
+        uint256 timestamp;        
+    }
+
+    struct ProjectInput {
+        address user;
         address client;
-        string projectHash; // SHA-256 hex
-        string link; // IPFS/GitHub link
-        bool verified;
+        string projectName;
+        string description;
+        string languages;
+        string projectHash;
+        string link;
     }
 
     struct Review {
@@ -45,32 +60,31 @@ contract CredChain is ERC721URIStorage, Ownable {
         emit UserVerified(user, status);
     }
 
-    // ------------------------------------------------------------
-    // Project management
-    // ------------------------------------------------------------
-    function addProject(
-        address user,
-        address client,
-        string calldata projectHash,
-        string calldata link
-    ) external  {
-        require(verifiedUsers[user], "User not verified");
-        require(!_projectHashExists[projectHash], "Project hash already exists");
+    function addProject(ProjectInput calldata p) external onlyOwner {
+        require(verifiedUsers[p.user], "User not verified");
+        require(!_projectHashExists[p.projectHash], "Project exists");
 
-        _projectHashExists[projectHash] = true;
+        _projectHashExists[p.projectHash] = true;
 
-        // Add project directly as verified
-        userProjects[user].push(Project(client, projectHash, link, true));
+        userProjects[p.user].push(
+            Project(
+                p.client,
+                p.projectName,
+                p.description,
+                p.languages,
+                p.projectHash,
+                p.link,
+                true,
+                block.timestamp
+            )
+        );
 
-        // Increment verified project count
-        projectCount[user] += 1;
+        projectCount[p.user] += 1;
+        _checkAndMintBadge(p.user);
 
-        // Check for milestone badge
-        _checkAndMintBadge(user);
-
-        emit ProjectAdded(user, userProjects[user].length - 1, projectHash, link);
-        emit ProjectVerified(user, userProjects[user].length - 1, true);
+        emit ProjectAdded(p.user, userProjects[p.user].length - 1, p.projectHash, p.link);
     }
+
 
 
     // ------------------------------------------------------------
@@ -105,6 +119,9 @@ contract CredChain is ERC721URIStorage, Ownable {
         emit ReviewAdded(freelancer, msg.sender, rating);
     }
 
+    function getReviewCount(address user) external view returns (uint) {
+        return userReviews[user].length;
+    }
     // ------------------------------------------------------------
     // Get project + reviews
     // ------------------------------------------------------------
