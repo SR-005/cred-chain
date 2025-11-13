@@ -33,13 +33,13 @@
         <div class="hidden md:flex space-x-8 items-center font-medium">
             <a href="/" class="text-light hover:text-light-muted transition">HOME</a>
             <a href="{{url_for('routes.about')}}" class="text-light hover:text-light-muted transition">ABOUT</a>
-            <a href="/" class="text-light hover:text-light-muted transition">HIRE</a>
+            <a href="{{url_for('routes.jobs')}}" class="text-light hover:text-light-muted transition">JOBS</a>
             <a href="{{url_for('routes.dashboard')}}" class="text-light hover:text-light-muted transition">DASHBOARD</a>
             <a href="{{url_for('routes.login')}}" class="text-light hover:text-light-muted transition">LOGIN</a>
             <a href="#" id="connect" class="bg-primary text-light font-semibold py-2 px-6 rounded-lg hover:bg-opacity-90 transition">
                 CONNECT WALLET
             </a>
-            <div id="addr" class="text-light-muted text-sm hidden"></div>
+           
         </div>
     </nav>
 

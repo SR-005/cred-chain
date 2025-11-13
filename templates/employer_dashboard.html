@@ -1,0 +1,162 @@
+{% extends "main.html" %}
+
+{% block title %}Employer Dashboard | Chain-Cred{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-primary-dark text-light p-4 sm:p-8">
+    <div class="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-8">
+        
+        <!-- === LEFT COLUMN: EMPLOYER PROFILE === -->
+        <div class="lg:col-span-1 space-y-8">
+            <!-- Profile Info Card -->
+            <div class="bg-primary rounded-2xl shadow-2xl border border-gray-700 overflow-hidden">
+                <!-- Profile Header -->
+                <div class="p-8 flex flex-col items-center">
+                    <!-- Avatar Placeholder -->
+                    <div class="w-32 h-32 rounded-full bg-primary-dark border-4 border-gray-700 flex items-center justify-center text-5xl mb-4">
+                        <span id="employer-avatar-initials">--</span>
+                    </div>
+                    
+                    <h2 id="employer-name" class="text-3xl font-bold text-center text-white">Loading...</h2>
+                    
+                    <p id="company-name" class="text-light-muted text-center text-sm mt-1 h-5">...</p>
+                    
+                    <a href="#" class="mt-6 w-full text-center px-6 py-2.5 rounded-lg border border-blue-500 text-blue-400 font-semibold hover:bg-blue-500 hover:text-white transition duration-300 ease-in-out">
+                        <ion-icon name="create-outline" class="text-lg align-middle mr-1"></ion-icon>
+                        Edit Company Profile
+                    </a>
+                </div>
+                
+                <!-- Contact Info -->
+                <div class="border-t border-gray-700 p-8 space-y-4">
+                    <h3 class="text-lg font-semibold text-white mb-4">Company Details</h3>
+                    
+                    <div class="flex items-center gap-4">
+                        <ion-icon name="code-slash-outline" class="w-5 h-5 text-light-muted flex-shrink-0"></ion-icon>
+                        <span id="employer-stack" class="text-light-muted">...</span>
+                    </div>
+                    <div class="flex items-center gap-4">
+                        <ion-icon name="logo-linkedin" class="w-5 h-5 text-light-muted flex-shrink-0"></ion-icon>
+                        <span id="employer-linkedin" class="text-light-muted">...</span>
+                    </div>
+                    <div class="flex items-center gap-4">
+                        <ion-icon name="wallet-outline" class="w-5 h-5 text-light-muted flex-shrink-0"></ion-icon>
+                        <span id="employer-wallet" class="text-light-muted text-xs truncate">...</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- === RIGHT COLUMN: STATS & JOB MANAGEMENT === -->
+        <div class="lg:col-span-2 space-y-8">
+
+            <!-- Quick Stats -->
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-6">
+                <!-- Stat Card 1 -->
+                <div class="bg-primary rounded-2xl shadow-lg border border-gray-700 p-6 flex items-center gap-4">
+                    <div class="p-3 bg-blue-600/30 rounded-full text-blue-400">
+                        <ion-icon name="briefcase-outline" class="text-2xl"></ion-icon>
+                    </div>
+                    <div>
+                        <span class="text-3xl font-bold text-white" id="stats-active-jobs">...</span>
+                        <p class="text-light-muted text-sm">Active Jobs</p>
+                    </div>
+                </div>
+                <!-- Stat Card 2 -->
+                <div class="bg-primary rounded-2xl shadow-lg border border-gray-700 p-6 flex items-center gap-4">
+                    <div class="p-3 bg-yellow-600/30 rounded-full text-yellow-400">
+                        <ion-icon name="document-text-outline" class="text-2xl"></ion-icon>
+                    </div>
+                    <div>
+                        <span class="text-3xl font-bold text-white" id="stats-proposals">...</span>
+                        <p class="text-light-muted text-sm">Proposals Rec'd</p>
+                    </div>
+                </div>
+                <!-- Stat Card 3 -->
+                <div class="bg-primary rounded-2xl shadow-lg border border-gray-700 p-6 flex items-center gap-4">
+                    <div class="p-3 bg-green-600/30 rounded-full text-green-400">
+                        <ion-icon name="people-outline" class="text-2xl"></ion-icon>
+                    </div>
+                    <div>
+                        <span class="text-3xl font-bold text-white" id="stats-total-hires">...</span>
+                        <p class="text-light-muted text-sm">Total Hires</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Manage Jobs Card -->
+            <div class="bg-primary rounded-2xl shadow-2xl border border-gray-700">
+                <div class="px-8 py-6 border-b border-gray-700 flex justify-between items-center">
+                    <h3 class="text-2xl font-bold flex items-center">
+                        <ion-icon name="folder-open-outline" class="text-2xl mr-2"></ion-icon>
+                        Manage Jobs
+                    </h3>
+                    <button class="px-4 py-2 rounded-lg bg-blue-600 text-white font-bold shadow-lg hover:bg-blue-500 hover:shadow-blue-500/50 transform hover:-translate-y-0.5 transition duration-300 ease-in-out flex items-center">
+                        <ion-icon name="add-outline" class="text-lg mr-1"></ion-icon>
+                        Post New Job
+                    </button>
+                </div>
+                
+                <!-- Jobs List -->
+                <div id="jobs-list" class="p-8 space-y-6">
+                    <!-- Placeholder for jobs, loaded via JS -->
+                    <div class="text-light-muted">Loading posted jobs...</div>
+                    
+                    <!-- 
+                    EXAMPLE of a loaded job card (for styling)
+                    This would be generated by your JavaScript
+                    -->
+                    <div class="bg-primary-dark border border-gray-700 rounded-lg p-6 hover:border-blue-500 transition duration-300">
+                        <div class="flex flex-col sm:flex-row justify-between sm:items-center mb-4">
+                            <h4 class="text-xl font-bold text-white mb-2 sm:mb-0">Senior Solidity Developer</h4>
+                            <span class="text-xs font-semibold text-green-400 bg-green-900/50 px-3 py-1 rounded-full w-fit">
+                                <ion-icon name="sync-outline" class="align-middle animate-spin mr-1"></ion-icon>
+                                Active
+                            </span>
+                        </div>
+                        <p class="text-light-muted text-sm mt-2 mb-4">Looking for an experienced Solidity dev to audit and optimize our staking contracts.</p>
+                        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                            <span class="text-light font-semibold">
+                                5 Proposals Received
+                            </span>
+                            <div class="flex space-x-2">
+                                <button class="p-2 rounded-lg bg-blue-600/50 text-blue-300 hover:bg-blue-600 hover:text-white transition duration-200" title="View Proposals">
+                                    <ion-icon name="eye-outline" class="text-lg"></ion-icon>
+                                </button>
+                                <button class="p-2 rounded-lg bg-gray-600/50 text-gray-300 hover:bg-gray-600 hover:text-white transition duration-200" title="Edit Job">
+                                    <ion-icon name="create-outline" class="text-lg"></ion-icon>
+                                </button>
+                                <button class="p-2 rounded-lg bg-red-600/50 text-red-300 hover:bg-red-600 hover:text-white transition duration-200" title="Close Job">
+                                    <ion-icon name="trash-outline" class="text-lg"></ion-icon>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Example 2: Closed job -->
+                    <div class="bg-primary-dark border border-gray-700 rounded-lg p-6 opacity-70">
+                        <div class="flex flex-col sm:flex-row justify-between sm:items-center mb-4">
+                            <h4 classs="text-xl font-bold text-white mb-2 sm:mb-0">Frontend Developer (React)</h4>
+                            <span class="text-xs font-semibold text-gray-400 bg-gray-700 px-3 py-1 rounded-full w-fit">
+                                Closed
+                            </span>
+                        </div>
+                    </div>
+                    
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 
+    IONICONS SCRIPT 
+    Add these two lines to your main.html file (before </body>) 
+    if you haven't already.
+-->
+<script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
+<script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
+
+<!-- Link to the dashboard-specific JavaScript -->
+<script src="{{ url_for('static', filename='js/employer_dashboard.js') }}"></script>
+{% endblock %}

@@ -8,7 +8,7 @@ def about():
     return render_template('about.html')
 
 @routes.route('/edit-profile')
-def profile():
+def edit_profile():
     return render_template('edit_profile.html')
 
 @routes.route('/login', methods=['GET', 'POST'])
@@ -18,3 +18,11 @@ def login():
 @routes.route('/Fdashboard')
 def dashboard():
     return render_template('Fdashboard.html')
+
+@routes.route('/Edashboard')
+def edashboard():
+    return render_template('employer_dashboard.html')
+
+@routes.route('/Jobs')
+def jobs():
+    return render_template('Fjobs.html')
