@@ -2,256 +2,185 @@
 <html>
 <head>
   <meta charset="utf-8">
+
+  <!-- Web3 + Contract JS -->
+  <script src="https://cdn.jsdelivr.net/npm/web3@1.10.0/dist/web3.min.js"></script>
+  <script type="module" src="/static/js/credchain.js"></script>
+
   <title>CredChain – Freelancer Dashboard</title>
+
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      background-color: #0a0a0a;
-      color: #e0e0e0;
-      text-align: center;
-      margin: 0;
-      padding: 30px;
-    }
-    h2, h3 {
-      color: #00ffc8;
-      margin-bottom: 10px;
-    }
-    button {
-      background-color: #00ffc8;
-      color: #000;
-      border: none;
-      padding: 10px 20px;
-      border-radius: 8px;
-      cursor: pointer;
-      margin: 8px;
-      font-weight: bold;
-      transition: 0.2s;
-    }
-    button:hover { background-color: #00cba1; }
-    input, textarea {
-      padding: 8px;
-      margin: 5px;
-      width: 300px;
-      border-radius: 6px;
-      border: none;
-      background: #111;
-      color: #e0e0e0;
-    }
-    textarea { width: 400px; height: 80px; }
-    .section {
-      border: 1px solid #222;
-      padding: 15px;
-      margin: 20px auto;
-      width: 80%;
-      border-radius: 12px;
-      background: #121212;
-    }
-    .project-card {
-      border: 1px solid #333;
-      padding: 15px;
-      margin: 15px auto;
-      width: 80%;
-      text-align: left;
-      border-radius: 10px;
-      background: #1a1a1a;
-    }
-    .profile-header {
-      background: #111;
-      padding: 15px;
-      border-radius: 10px;
-      margin-bottom: 20px;
-    }
-    .profile-pic {
-      width: 100px;
-      height: 100px;
-      border-radius: 50%;
-      margin-bottom: 10px;
-      object-fit: cover;
-      border: 2px solid #00ffc8;
-    }
-    a {
-      color: #00ffc8;
-      text-decoration: none;
-    }
-    a:hover {
-      text-decoration: underline;
-    }
+    body { font-family: Arial; background:#0a0a0a; color:#e0e0e0; text-align:center; padding:30px; }
+    h2, h3 { color:#00ffc8; }
+    button { background:#00ffc8; padding:10px 20px; border-radius:8px; border:none; cursor:pointer; margin:10px; }
+    button:hover { background:#00cba1; }
+    input, textarea { background:#111; border:none; color:#e0e0e0; border-radius:6px; width:300px; margin:5px; padding:8px; }
+    textarea { width:400px; height:80px; }
+    .section { background:#121212; border-radius:12px; padding:20px; margin:30px auto; width:80%; }
+    .project-card { background:#1a1a1a; margin:20px auto; padding:15px; border-radius:10px; width:80%; text-align:left; }
   </style>
 </head>
+
 <body>
 
-  <h2>CredChain – Freelancer Dashboard</h2>
-  <button id="connect">🔗 Connect MetaMask</button>
-  <div id="addr"></div>
+<h2>CredChain – Freelancer Dashboard</h2>
+<button id="connect">🔗 Connect MetaMask</button>
+<div id="addr"></div>
 
-  <!-- ------------------ PROFILE SECTION ------------------ -->
-  <div class="section">
-    <h3>🧑‍💻 My Profile</h3>
-    <input id="name" placeholder="Full Name"><br>
-    <textarea id="bio" placeholder="Short Bio"></textarea><br>
-    <input id="skills" placeholder="Skills (comma-separated, e.g., Solidity, Flask)"><br>
-    <input id="linkedin" placeholder="LinkedIn Profile URL"><br>
-    <input id="email" placeholder="Email Address"><br>
-    <input id="phone" placeholder="Phone Number"><br>
-    <button id="saveProfile">Save / Update Profile</button>
-    <button id="loadProfile">View My Profile</button>
-    <div id="profileDisplay"></div>
-  </div>
+<!-- PROFILE SECTION -->
+<div class="section">
+  <h3>🧑‍💻 My Profile</h3>
 
-  <hr>
+  <input id="name" placeholder="Full Name"><br>
+  <textarea id="bio" placeholder="Short Bio"></textarea><br>
+  <input id="skills" placeholder="Skills (comma-separated)"><br>
+  <input id="linkedin" placeholder="LinkedIn URL"><br>
+  <input id="email" placeholder="Email Address"><br>
+  <input id="phone" placeholder="Phone Number"><br>
 
-  <h3>Verify Identity (GitHub/LinkedIn)</h3>
-  <input id="profileLink" placeholder="https://github.com/username"/>
-  <button id="verify">Verify</button>
+  <button id="saveProfile">Save / Update Profile</button>
+  <button id="loadProfile">View My Profile</button>
 
-  <hr>
+  <div id="profileDisplay"></div>
+</div>
 
-  <h3>Submit Project (Builder)</h3>
-  <input id="proj_name" placeholder="Project Name"/>
-  <textarea id="proj_desc" placeholder="Short Description"></textarea>
-  <input id="proj_lang" placeholder="Languages (comma-separated)"/>
-  <input id="proj" placeholder="https://raw.githubusercontent.com/..."/>
-  <input id="client" placeholder="0xClientWalletAddress"/>
-  <button id="submit">Submit Project</button>
+<hr>
 
-  <hr>
+<h3>Verify Identity (GitHub)</h3>
+<input id="profileLink" placeholder="https://github.com/username"/>
+<button id="verify">Verify</button>
+
+<hr>
+
+<h3>Submit Project</h3>
+<input id="proj_name" placeholder="Project Name"/><br>
+<textarea id="proj_desc" placeholder="Short Description"></textarea><br>
+<input id="proj_lang" placeholder="Languages"/><br>
+<input id="proj" placeholder="https://raw.githubusercontent.com/..."/><br>
+<input id="client" placeholder="0xClientWalletAddress"/><br>
+<button id="submit">Submit Project</button>
 
 
 <script>
 let account;
 
-// -------- Connect MetaMask --------
-document.getElementById('connect').onclick = async () => {
-  if (window.ethereum) {
-    const accs = await ethereum.request({ method: 'eth_requestAccounts' });
-    account = accs[0];
-    document.getElementById('addr').innerText = 'Connected: ' + account;
-    loadProfile(); // auto-load on connect
-  } else {
-    alert('Install MetaMask');
-  }
+document.getElementById("connect").onclick = async () => {
+    try {
+        const addr = await window.connectWallet();
+        document.getElementById("addr").innerText = "Connected: " + addr;
+    } catch (e) {
+        console.error("connect error:", e);
+        alert("Connection failed: " + e.message);
+    }
 };
 
-// ----------------- PROFILE MANAGEMENT -----------------
+// LOAD PROFILE + PROJECTS
 async function loadProfile() {
-  if (!account) return;
-  const display = document.getElementById('profileDisplay');
-  display.innerHTML = "<p>Loading profile...</p>";
+    const box = document.getElementById("profileDisplay");
+    box.innerHTML = "<p>Loading…</p>";
 
-  try {
-    const profileRes = await fetch(`http://localhost:5000/get_profile/${account}`);
-    if (!profileRes.ok) {
-      display.innerHTML = "<p>No profile found for this wallet.</p>";
-      return;
-    }
-    const profile = await profileRes.json();
+    // Load profile
+    const profile = await fetch(`http://localhost:5000/get_profile/${account}`);
+    const pdata = await profile.json();
 
-    // Fetch freelancer's projects
-    const projectsRes = await fetch(`http://localhost:5000/get_all_projects/${account}`);
-    const allProjects = await projectsRes.json();
-    const freelancerProjects = allProjects.filter(p => p.builder?.toLowerCase() === account.toLowerCase());
-
-    // Build HTML
-    let html += `
-      <div class="project-card">
-      <b>Project #${index + 1}</b><br>
-      <b>Name:</b> ${proj.projectName}<br>
-      <b>Description:</b> ${proj.description}<br>
-      <b>Languages:</b> ${proj.languages}<br>
-      <b>Client:</b> ${proj.client}<br>
-      <b>Hash:</b> ${proj.projectHash}<br>
-      <b>Link:</b> <a href="${proj.link}" target="_blank">${proj.link}</a><br>
-      <b>Verified:</b> ${proj.verified ? "✅ Yes" : "❌ No"}<br>
-      <b>Timestamp:</b> ${new Date(proj.timestamp * 1000).toLocaleString()}
-    </div>
+    let html = `
+      <h3>${pdata.name || "Unnamed"}</h3>
+      <p>${pdata.bio || ""}</p>
+      <p><b>Skills:</b> ${(pdata.skills || []).join(", ")}</p>
+      <p><b>Email:</b> ${pdata.email || "-"}</p>
+      <p><b>Phone:</b> ${pdata.phone || "-"}</p>
+      <hr>
+      <h3>📁 Projects</h3>
     `;
 
-    if (freelancerProjects.length > 0) {
-      html += `<h3>📁 Projects Completed</h3>`;
-      for (const [index, proj] of freelancerProjects.entries()) {
-        try {
-          const detailRes = await fetch(
-            `http://localhost:5000/get_project_with_reviews?builder=${account}&index=${index}`
-          );
-          const detail = await detailRes.json();
-          html += `
-            <div class="project-card">
-              <b>Project #${index + 1}</b><br>
-              <b>Client:</b> ${detail.client}<br>
-              <b>Link:</b> <a href="${detail.link}" target="_blank">${detail.link}</a><br>
-              <b>Verified:</b> ${detail.verified ? "✅ Yes" : "❌ No"}<br>
-              <b>Project Hash:</b> ${detail.projectHash}<br>
-              <b>Reviews:</b>
-              <pre style="background:#0e0e0e; color:#0f0; padding:8px; border-radius:8px;">${JSON.stringify(detail.reviews, null, 2)}</pre>
-            </div>`;
-        } catch (err) {
-          console.error("Error fetching project details:", err);
-        }
-      }
+    // Load blockchain projects
+    const res = await fetch(`http://localhost:5000/get_all_projects/${account}`);
+    const data = await res.json();
+
+    if (data.projects?.length > 0) {
+        data.projects.forEach((p, i) => {
+            html += `
+              <div class="project-card">
+                <b>Project #${i + 1}</b><br>
+                <b>Name:</b> ${p.projectName}<br>
+                <b>Description:</b> ${p.description}<br>
+                <b>Languages:</b> ${p.languages}<br>
+                <b>Link:</b> <a href="${p.link}" target="_blank">${p.link}</a><br>
+                <b>Verified:</b> ${p.verified ? "Yes" : "No"}<br>
+                <b>Hash:</b> ${p.projectHash}<br>
+              </div>
+            `;
+        });
     } else {
-      html += `<p>No projects found yet.</p>`;
+        html += "<p>No projects yet.</p>";
     }
 
-    display.innerHTML = html;
-  } catch (err) {
-    console.error(err);
-    display.innerHTML = "<p>Error loading profile.</p>";
-  }
+    box.innerHTML = html;
 }
 
-document.getElementById('loadProfile').onclick = loadProfile;
+document.getElementById("loadProfile").onclick = loadProfile;
 
-document.getElementById('saveProfile').onclick = async () => {
-  if (!account) return alert('Connect wallet first');
-  const name = document.getElementById('name').value;
-  const bio = document.getElementById('bio').value;
-  const skills = document.getElementById('skills').value.split(',').map(s => s.trim());
-  const github = document.getElementById('github').value;
-  const linkedin = document.getElementById('linkedin').value;
-  const profile_pic = document.getElementById('profile_pic').value;
+// SAVE PROFILE
+document.getElementById("saveProfile").onclick = async () => {
+    const body = {
+        wallet: account,
+        name: document.getElementById("name").value,
+        bio: document.getElementById("bio").value,
+        skills: document.getElementById("skills").value.split(",").map(s => s.trim()),
+        linkedin: document.getElementById("linkedin").value,
+        email: document.getElementById("email").value,
+        phone: document.getElementById("phone").value
+    };
 
-  const res = await fetch('http://localhost:5000/create_profile', {
-    method: 'POST',
-    headers: {'Content-Type':'application/json'},
-    body: JSON.stringify({wallet: account, name, bio, skills, github, linkedin, profile_pic})
-  });
-  const data = await res.json();
-  alert('Profile Updated:\n' + JSON.stringify(data, null, 2));
-  loadProfile();
+    const res = await fetch("http://localhost:5000/create_profile", {
+        method: "POST",
+        headers: {"Content-Type":"application/json"},
+        body: JSON.stringify(body)
+    });
+
+    alert("Profile Saved");
+    loadProfile();
 };
 
-// -------- Verify User --------
-document.getElementById('verify').onclick = async () => {
-  if (!account) return alert('Connect first');
-  const profile = document.getElementById('profileLink').value;
-  const res = await fetch('http://localhost:5000/verify_user', {
-    method: 'POST',
-    headers: {'Content-Type':'application/json'},
-    body: JSON.stringify({wallet: account, profile_link: profile})
-  });
-  const data = await res.json();
-  alert(JSON.stringify(data, null, 2));
+// VERIFY USER
+document.getElementById("verify").onclick = async () => {
+    const link = document.getElementById("profileLink").value;
+
+    // backend validates GitHub link
+    await fetch("http://localhost:5000/verify_user", {
+        method: "POST",
+        headers: {"Content-Type":"application/json"},
+        body: JSON.stringify({wallet: account, profile_link: link})
+    });
+
+    // blockchain verification
+    const tx = await verifyUserOnChain();
+    alert("Verified On Chain: " + tx.transactionHash);
 };
 
-// -------- Submit Project (Builder) --------
-document.getElementById('submit').onclick = async () => {
-  const name = document.getElementById('proj_name').value;
-  const description = document.getElementById('proj_desc').value;
-  const languages = document.getElementById('proj_lang').value;
-  const link = document.getElementById('proj').value;
-  const client = document.getElementById('client').value;
+// SUBMIT PROJECT
+document.getElementById("submit").onclick = async () => {
+    const name = document.getElementById("proj_name").value;
+    const desc = document.getElementById("proj_desc").value;
+    const lang = document.getElementById("proj_lang").value;
+    const link = document.getElementById("proj").value;
+    const client = document.getElementById("client").value;
 
-  const res = await fetch('http://localhost:5000/submit_project', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ wallet: account, client, name, description, languages, link })
-  });
+    // Backend fetches file and hashes it
+    const r = await fetch("http://localhost:5000/hash_project", {
+        method: "POST",
+        headers: {"Content-Type":"application/json"},
+        body: JSON.stringify({link})
+    });
 
-  const data = await res.json();
-  alert(JSON.stringify(data, null, 2));
+    const { hash } = await r.json();
+
+    const tx = await addProjectOnChain(client, name, desc, lang, hash, link);
+    alert("Project Added: " + tx.transactionHash);
+
+    loadProfile();
 };
-
-
 </script>
+
 </body>
 </html>

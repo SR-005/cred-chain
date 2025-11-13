@@ -27,29 +27,6 @@ def home():
 def clientpage():
     return render_template('client.html')
 
-#-----------------------------------------------------------SMART CONTRACT DEPLOYMENT-----------------------------------------------------------
-def deploysmartcontract():                                  #deployment function call
-    print("Contract Deployment Function Triggered")
-    contractaddress,abi=depoly_contract()  
-    global contract
-
-    with open("./compiledcccode.json","r") as file:
-        compiledsol = json.load(file) 
-    abi=compiledsol["contracts"]["chaincred.sol"]["CredChain"]["abi"]
-    contract=w3.eth.contract(address=contractaddress, abi=abi)
-    
-
-def getsmartcontract():                                  #deployment function call
-    print("Getting Contract Address")  
-    
-    with open("./compiledcccode.json","r") as file:
-        compiledsol = json.load(file) 
-    abi=compiledsol["contracts"]["chaincred.sol"]["CredChain"]["abi"]
-
-    global contract
-    contract=w3.eth.contract(address="0x644268573996Ae7c93852C140C722C0306004387", abi=abi)
-    
-
 #-----------------------------------------------------------JSON FILES-----------------------------------------------------------
 BUILDERS_FILE = "builders.json"
 def load_builders():
@@ -95,10 +72,43 @@ def save_profiles():
 
 load_profiles()
 
+#-----------------------------------------------------------SMART CONTRACT DEPLOYMENT-----------------------------------------------------------
+def deploysmartcontract():                                  #deployment function call
+    print("Contract Deployment Function Triggered")
+    contractaddress,abi=depoly_contract()  
+    global contract
+
+    with open("./static/compiledcccode.json","r") as file:
+        compiledsol = json.load(file) 
+    abi=compiledsol["contracts"]["chaincred.sol"]["CredChain"]["abi"]
+
+    with open("static\js\credchain_abi.js", "w") as out:
+        out.write("const CONTRACT_ABI = ")
+        out.write(json.dumps(abi))
+        out.write(";")
+
+    contract=w3.eth.contract(address=contractaddress, abi=abi)
+    
+
+def getsmartcontract():                                  #deployment function call
+    print("Getting Contract Address")  
+    
+    with open("./static/compiledcccode.json","r") as file:
+        compiledsol = json.load(file) 
+    abi=compiledsol["contracts"]["chaincred.sol"]["CredChain"]["abi"]
+
+    with open("static\js\credchain_abi.js", "w") as out:
+        out.write("const CONTRACT_ABI = ")
+        out.write(json.dumps(abi))
+        out.write(";")
+
+    global contract
+    contract=w3.eth.contract(address="0x644268573996Ae7c93852C140C722C0306004387", abi=abi)
+
 #-----------------------------------------------------------CALL FUNCTIONS-----------------------------------------------------------
 def callfeature(feature):
     print("Function Call Recieved!!")
-    balance = w3.eth.get_balance(MYADDRESS)
+    balance = w3.eth.get_balance(wallet)
     print("Balance:", w3.from_wei(balance, "ether"), "DEV")
 
     
@@ -137,6 +147,7 @@ def verify_user():
     { "wallet": "0x..", "profile_link": "https://github.com/..." }
     """
     data = request.get_json()
+    global wallet
     wallet = data.get("wallet")
     print(wallet)
     link = data.get("profile_link")

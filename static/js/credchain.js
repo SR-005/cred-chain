@@ -1,0 +1,166 @@
+// /static/js/credchain.js
+// This module dynamically fetches the compiled contract JSON to get the ABI
+// — avoids import path/packaging problems with a separate abi JS file.
+
+let web3;
+let contract;
+let account;
+
+const CONTRACT_ADDRESS = "0x644268573996Ae7c93852C140C722C0306004387";
+const COMPILED_JSON_PATH = "./static/compiledcccode.json"; // serve this from your static folder
+
+// ---- helper: load ABI from compiled JSON ----
+async function loadAbi() {
+    try {
+        console.log("[credchain] fetching compiled JSON:", COMPILED_JSON_PATH);
+        const resp = await fetch(COMPILED_JSON_PATH);
+        if (!resp.ok) throw new Error(`Failed to fetch ABI JSON: ${resp.status}`);
+        const compiled = await resp.json();
+
+        // adjust the path depending on how your compiled file is structured
+        // this matches your earlier Python: compiledsol["contracts"]["chaincred.sol"]["CredChain"]["abi"]
+        const abi = compiled?.contracts?.["chaincred.sol"]?.CredChain?.abi;
+        if (!abi) throw new Error("ABI not found at expected path in compiledcccode.json");
+        console.log("[credchain] ABI loaded, length:", abi.length);
+        return abi;
+    } catch (err) {
+        console.error("[credchain] loadAbi error:", err);
+        throw err;
+    }
+}
+
+// ---- network switch to Moonbase Alpha (HEX chainId) ----
+async function switchToMoonbase() {
+    const chainIdHex = "0x507"; // 1287
+    if (!window.ethereum) throw new Error("No ethereum provider (MetaMask)");
+
+    try {
+        await window.ethereum.request({
+            method: "wallet_switchEthereumChain",
+            params: [{ chainId: chainIdHex }]
+        });
+        console.log("[credchain] switched to Moonbase Alpha");
+    } catch (err) {
+        // 4902 -> chain not added
+        if (err.code === 4902) {
+            try {
+                await window.ethereum.request({
+                    method: "wallet_addEthereumChain",
+                    params: [{
+                        chainId: chainIdHex,
+                        chainName: "Moonbase Alpha",
+                        rpcUrls: ["https://rpc.api.moonbase.moonbeam.network"],
+                        nativeCurrency: { name: "DEV", symbol: "DEV", decimals: 18 },
+                        blockExplorerUrls: ["https://moonbase.moonscan.io/"]
+                    }]
+                });
+                console.log("[credchain] added Moonbase Alpha");
+            } catch (addErr) {
+                console.error("[credchain] add chain error:", addErr);
+                throw addErr;
+            }
+        } else {
+            console.error("[credchain] switch chain error:", err);
+            throw err;
+        }
+    }
+}
+
+// ---- initialize web3 + contract (loads ABI at runtime) ----
+async function initContract() {
+    if (!window.ethereum) throw new Error("MetaMask not found");
+    if (!web3) {
+        web3 = new Web3(window.ethereum);
+    }
+
+    const abi = await loadAbi();
+    contract = new web3.eth.Contract(abi, CONTRACT_ADDRESS);
+    console.log("[credchain] contract instance created");
+}
+
+// ---- connect and ensure chain + contract inited ----
+export async function connectWallet() {
+    if (!window.ethereum) {
+        alert("Install MetaMask!");
+        throw new Error("No ethereum provider");
+    }
+
+    await switchToMoonbase();
+
+    web3 = new Web3(window.ethereum);
+    const accounts = await ethereum.request({ method: "eth_requestAccounts" });
+    account = accounts[0];
+    console.log("[credchain] wallet connected:", account);
+
+    // ensure contract ready
+    await initContract();
+
+    // expose some helpful debugging info to console
+    try {
+        const chainId = await web3.eth.getChainId();
+        console.log("[credchain] chainId:", chainId);
+    } catch (e) { /* ignore */ }
+
+    return account;
+}
+
+// ---- transaction sender with gas estimation and try/catch ----
+async function sendTx(txObject) {
+    if (!account) throw new Error("account not set; call connectWallet() first");
+    try {
+        const gas = await txObject.estimateGas({ from: account });
+        const gasPrice = await web3.eth.getGasPrice();
+        console.log("[credchain] sending tx — gas:", gas, "gasPrice:", gasPrice);
+
+        const receipt = await txObject.send({
+            from: account,
+            gas,
+            gasPrice
+        });
+        console.log("[credchain] tx receipt:", receipt);
+        return receipt;
+    } catch (err) {
+        console.error("[credchain] sendTx error:", err);
+        throw err;
+    }
+}
+
+// ---- contract calls ----
+export async function verifyUserOnChain() {
+    if (!contract || !account) await connectWallet();
+    return sendTx(contract.methods.setUserVerified(account, true));
+}
+
+// IMPORTANT: when your Solidity function takes a struct `ProjectInput calldata p`
+// web3 expects an object with the struct fields in correct name/order.
+// We'll pass a plain object — make sure Solidity struct keys match these names.
+export async function addProjectOnChain(client, name, desc, lang, projectHash, link) {
+    if (!contract || !account) await connectWallet();
+
+    // Build struct object exactly as in Solidity: { user, client, projectName, description, languages, projectHash, link }
+    const p = {
+        user: account,
+        client,
+        projectName: name,
+        description: desc,
+        languages: lang,
+        projectHash,
+        link
+    };
+
+    console.log("[credchain] addProject struct:", p);
+    return sendTx(contract.methods.addProject(p));
+}
+
+export async function submitReviewOnChain(freelancer, index, rating, commentHash) {
+    if (!contract || !account) await connectWallet();
+    return sendTx(contract.methods.submitReview(freelancer, index, rating, commentHash));
+}
+
+// expose to window so inline HTML can call them
+window.connectWallet = connectWallet;
+window.verifyUserOnChain = verifyUserOnChain;
+window.addProjectOnChain = addProjectOnChain;
+window.submitReviewOnChain = submitReviewOnChain;
+
+console.log("[credchain] module loaded");

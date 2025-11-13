@@ -31,7 +31,7 @@ def depoly_contract():
     )
 
     #move the compiled code into a new file 'compiledcode.json'
-    with open("./compiledcccode.json","w") as file:
+    with open("./static/compiledcccode.json","w") as file:
         json.dump(compiledsol,file)
 
     #fetching bytecode from the compiled Smart Contract
