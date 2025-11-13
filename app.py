@@ -159,7 +159,7 @@ def verifyuser():
 
     try:
         r = requests.get(link, timeout=10, headers={"User-Agent": "CredChainVerifier/1.0"})
-        if r.status_code != 200:
+        if r.status_code == 404:
             return jsonify({"valid": False, "reason": "GitHub page not found"}), 400
 
     except Exception as e:
@@ -265,46 +265,8 @@ def submit_project():
         "index": index
     })
 
-
-#-----------------------------------------------------------CLIENT PROJECTS-----------------------------------------------------------
-@app.route("/get_projects_for_client/<wallet>")
-def get_projects_for_client(wallet):
-    projects = []
-    # Iterate through all known builders (or fetch from DB if stored)
-    for builder in KNOWN_BUILDERS:  # you can track builders in a set
-        count = contract.functions.getProjectCount(Web3.to_checksum_address(builder)).call()
-        for i in range(count):
-            p = contract.functions.getProject(Web3.to_checksum_address(builder), i).call()
-            if Web3.to_checksum_address(p[0]) == Web3.to_checksum_address(wallet):  # client matches
-                projects.append({
-                    "builder": builder,
-                    "link": p[2],
-                    "verified": p[3]
-                })
-    return jsonify(projects)
-
-
-#-----------------------------------------------------------REVIEW-----------------------------------------------------------
-@app.route("/submit_review", methods=["POST"])
-def submit_review():
-    data = request.get_json()
-    freelancer = data.get("freelancer")
-    project_index = int(data.get("project_index"))
-    rating = int(data.get("rating"))
-    comment_hash = data.get("comment_hash")  # optional IPFS comment link
-
-
-    fn = contract.functions.submitReview(
-        Web3.to_checksum_address(freelancer),
-        project_index,
-        rating,
-        comment_hash
-    )
-    receipt = callfeature(fn)
-    return jsonify({"tx": receipt.transactionHash.hex()})
-
 # ----------------------------------------------------------- GET ALL PROJECTS (BUILDER) -----------------------------------------------------------
-@app.route("/get_all_projects/<builder>", methods=["GET"])
+@app.route("/get_all_projects/<builder>", methods=["GET"])      #from freelancer side
 def get_all_projects(builder):
     getsmartcontract()
     try:
@@ -338,6 +300,51 @@ def get_all_projects(builder):
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
+
+#-----------------------------------------------------------CLIENT PROJECTS-----------------------------------------------------------
+@app.route("/get_projects_for_client/<wallet>")
+def get_projects_for_client(wallet):
+    projects = []
+    getsmartcontract()
+    
+    for builder in KNOWN_BUILDERS:  
+        count = contract.functions.getProjectCount(Web3.to_checksum_address(builder)).call()
+        for i in range(count):
+            p = contract.functions.getProject(Web3.to_checksum_address(builder), i).call()
+            if Web3.to_checksum_address(p[0]) == Web3.to_checksum_address(wallet):  # client matches
+                projects.append({
+                "freelancer": builder,
+                "projectName": p[1],
+                "description": p[2],
+                "languages": p[3],
+                "projectHash": p[4],
+                "link": p[5],
+                "verified": p[6],
+                "timestamp": p[7]
+            })
+    return jsonify(projects)
+
+
+#-----------------------------------------------------------REVIEW-----------------------------------------------------------
+@app.route("/submit_review", methods=["POST"])
+def submit_review():
+    data = request.get_json()
+    freelancer = data.get("freelancer")
+    project_index = int(data.get("project_index"))
+    rating = int(data.get("rating"))
+    comment_hash = data.get("comment_hash")  # optional IPFS comment link
+
+
+    fn = contract.functions.submitReview(
+        Web3.to_checksum_address(freelancer),
+        project_index,
+        rating,
+        comment_hash
+    )
+    receipt = callfeature(fn)
+    return jsonify({"tx": receipt.transactionHash.hex()})
+
 
 
 
