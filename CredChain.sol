@@ -4,7 +4,6 @@ pragma solidity ^0.8.17;
 import "./node_modules/@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
 import "./node_modules/@openzeppelin/contracts/access/Ownable.sol";
 
-
 contract CredChain is ERC721URIStorage, Ownable {
     struct Project {
         address client;           
@@ -51,7 +50,7 @@ contract CredChain is ERC721URIStorage, Ownable {
     constructor() ERC721("CredChainBadge", "CCB") Ownable() {
         tokenCounter = 1;
     }
-
+    
     // ------------------------------------------------------------
     // User verification
     // ------------------------------------------------------------
@@ -183,10 +182,10 @@ contract CredChain is ERC721URIStorage, Ownable {
     }
 
     function _getBadgeURI(uint256 milestone) internal pure returns (string memory) {
-        if (milestone == 3) return "ipfs://QmBadge3";
-        if (milestone == 5) return "ipfs://QmBadge5";
-        if (milestone == 7) return "ipfs://QmBadge7";
-        if (milestone == 10) return "ipfs://QmBadge10";
+        if (milestone == 3) return "ipfs://bafkreift27qf2ecqpdj3sumeat7cqwl23qk6gprev2lujsmodcyyqgigsa";
+        if (milestone == 5) return "ipfs://bafkreiamem4eaij3jqxpxjtj2ylcpx2letvbw3h6ohv6b47ujnmlhu3nqe";
+        if (milestone == 7) return "ipfs://bafkreif2wltsod6tekskq646abpwwaiq4tzdfodtmg2is7lfjub7gsw7w4";
+        if (milestone == 10) return "ipfs://bafkreihtukqrui2ydjoznexhondrpzlovf3jzuhvyjmcob4krsl5wtbexe";
         return "";
     }
 

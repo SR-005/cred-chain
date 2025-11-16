@@ -1,0 +1,9 @@
+{
+  "name": "Silver Contributor Badge",
+  "description": "Awarded for verifying a project on the platform.",
+  "image": "ipfs://bafkreidrusmgds36rqx7kdzq63z6c26do7iriwlynd4lml7tiyby3pldli/images/badge2.png",
+  "attributes": [
+    { "trait_type": "Role", "value": "Contributor" },
+    { "trait_type": "Level", "value": "Silver" }
+  ]
+}
