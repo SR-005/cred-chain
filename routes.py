@@ -12,6 +12,10 @@ def about():
 def edit_profile():
     return render_template('edit_profile.html')
 
+@routes.route('/edit-company-profile')
+def company_profile():
+    return render_template('edit_company_profile.html')
+
 @routes.route('/login', methods=['GET', 'POST'])
 def login():
     return render_template('login.html')
@@ -32,3 +36,7 @@ def jobs():
 def wallet_login():
     """A simple page for returning users to log in."""
     return render_template('wallet_login.html')
+
+@routes.route('/find-freelancers')
+def find_freelancers():
+    return render_template('find_freelancer.html')

@@ -1,0 +1,109 @@
+{% extends "main.html" %}
+
+{% block title %}Find Freelancers | Chain-Cred{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-primary-dark text-light p-4 sm:p-8">
+    <div class="max-w-7xl mx-auto">
+        
+        <div class="mb-8">
+            <h1 class="text-4xl font-bold text-white mb-4">Hire Top Web3 Freelancers</h1>
+            <p class="text-lg text-light-muted">Browse profiles of verified developers, auditors, and designers.</p>
+            
+            <div class="mt-6 flex gap-3">
+                <input type="text" id="search-input" placeholder="Search by skill (e.g., 'Solidity', 'Python')"
+                       class="flex-grow bg-primary border border-gray-600 text-light rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200 placeholder-gray-500">
+                <button id="search-button" class="px-6 py-3 rounded-lg bg-blue-600 text-white font-bold shadow-lg hover:bg-blue-500 hover:shadow-blue-500/50 transform hover:-translate-y-0.5 transition duration-300 ease-in-out">
+                    <ion-icon name="search-outline" class="text-lg"></ion-icon>
+                </button>
+            </div>
+        </div>
+
+        <div id="freelancer-results-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+
+            <div class="bg-primary rounded-2xl shadow-2xl border border-gray-700 overflow-hidden flex flex-col h-full transition duration-300 ease-in-out hover:border-blue-500 hover:-translate-y-1">
+                
+                <div class="p-6">
+                    <div class="flex items-center gap-3 mb-2">
+                        <ion-icon name="person-outline" class="text-blue-400 text-xl"></ion-icon>
+                        <span class="text-sm font-medium text-blue-400">Python & Web3 Specialist</span>
+                    </div>
+                    <h3 class="text-2xl font-bold text-white mb-3">Sreeram V Gopal</h3>
+                </div>
+
+                <div class="px-6 pb-6 space-y-4">
+                    <p class="text-light-muted text-sm h-20">Hello World</p>
+
+                    <div class="flex items-center gap-6 pt-2">
+                        <div class="flex items-center gap-2">
+                            <ion-icon name="folder-open-outline" class="text-light-muted flex-shrink-0"></ion-icon>
+                            <span class="text-light-muted text-sm font-medium">5 Projects</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <ion-icon name="star-outline" class="text-light-muted flex-shrink-0"></ion-icon>
+                            <span class="text-light-muted text-sm font-medium">3 Reviews</span>
+                        </div>
+                    </div>
+
+                    <div>
+                        <h4 class="text-sm font-semibold text-light mb-3">Skills</h4>
+                        <div class="flex flex-wrap gap-2">
+                            <span class="bg-primary-dark text-blue-300 text-xs font-semibold px-3 py-1 rounded-full">Flask</span>
+                            <span class="bg-primary-dark text-blue-300 text-xs font-semibold px-3 py-1 rounded-full">OpenCV</span>
+                            <span class="bg-primary-dark text-blue-300 text-xs font-semibold px-3 py-1 rounded-full">Web3.py</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="p-6 mt-auto border-t border-gray-700 bg-primary-dark/30">
+                    <a href="#" class="w-full text-center block px-6 py-2.5 rounded-lg bg-blue-600 text-white font-bold shadow-lg hover:bg-blue-500 hover:shadow-blue-500/50 transform hover:-translate-y-0.5 transition duration-300 ease-in-out">
+                        View Profile
+                    </a>
+                </div>
+            </div>
+            <div class="bg-primary rounded-2xl shadow-2xl border border-gray-700 overflow-hidden flex flex-col h-full transition duration-300 ease-in-out hover:border-blue-500 hover:-translate-y-1">
+                
+                <div class="p-6">
+                    <div class="flex items-center gap-3 mb-2">
+                        <ion-icon name="person-outline" class="text-blue-400 text-xl"></ion-icon>
+                        <span class="text-sm font-medium text-blue-400">Frontend Developer</span>
+                    </div>
+                    <h3 class="text-2xl font-bold text-white mb-3">Alwin Emmanuel</h3>
+                </div>
+
+                <div class="px-6 pb-6 space-y-4">
+                    <p class="text-light-muted text-sm h-20">Hello World</p>
+
+                    <div class="flex items-center gap-6 pt-2">
+                        <div class="flex items-center gap-2">
+                            <ion-icon name="folder-open-outline" class="text-light-muted flex-shrink-0"></ion-icon>
+                            <span class="text-light-muted text-sm font-medium">2 Projects</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <ion-icon name="star-outline" class="text-light-muted flex-shrink-0"></ion-icon>
+                            <span class="text-light-muted text-sm font-medium">1 Review</span>
+                        </div>
+                    </div>
+
+                    <div>
+                        <h4 class="text-sm font-semibold text-light mb-3">Skills</h4>
+                        <div class="flex flex-wrap gap-2">
+                            <span class="bg-primary-dark text-blue-300 text-xs font-semibold px-3 py-1 rounded-full">REACT</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="p-6 mt-auto border-t border-gray-700 bg-primary-dark/3Click 0">
+                    <a href="#" class="w-full text-center block px-6 py-2.5 rounded-lg bg-blue-600 text-white font-bold shadow-lg hover:bg-blue-500 hover:shadow-blue-500/50 transform hover:-translate-y-0.5 transition duration-300 ease-in-out">
+                        View Profile
+                    </a>
+                </div>
+            </div>
+           
+            </div>
+    </div>
+</div>
+
+<script src="{{ url_for('static', filename='js/find_freelancers.js') }}"></script>
+
+{% endblock %}
