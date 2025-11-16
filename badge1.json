@@ -1,0 +1,9 @@
+{
+  "name": "Bronze Contributor Badge",
+  "description": "Awarded for verifying a project on the platform.",
+  "image": "ipfs://bafybeia7z2tn7uk7dsimsp3mfgnmrveocbirll7msiczyf6k2kbod7zpoa/images/badge1.png",
+  "attributes": [
+    { "trait_type": "Role", "value": "Contributor" },
+    { "trait_type": "Level", "value": "Bronze" }
+  ]
+}

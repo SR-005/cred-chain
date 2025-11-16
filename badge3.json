@@ -1,0 +1,9 @@
+{
+  "name": "Gold Contributor Badge",
+  "description": "Awarded for verifying a project on the platform.",
+  "image": "ipfs://bafkreib26egf32xhzevddklaem34otehizcrpli4wwsxijji23ng3nu2fm/images/badge3.png",
+  "attributes": [
+    { "trait_type": "Role", "value": "Contributor" },
+    { "trait_type": "Level", "value": "Gold" }
+  ]
+}
