@@ -110,7 +110,7 @@ def getsmartcontract():                                  #deployment function ca
         out.write(";")
 
     global contract
-    contract=w3.eth.contract(address="0xCCc0F45E8bE87022ea3E553BdD2f64cD6aAeed79", abi=abi)
+    contract=w3.eth.contract(address="0xF4F2850761BDdDC14f763299622c49F669945e05", abi=abi)
 
 #-----------------------------------------------------------CALL FUNCTIONS-----------------------------------------------------------
 def callfeature(feature):

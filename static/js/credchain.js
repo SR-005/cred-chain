@@ -6,7 +6,7 @@ let web3;
 let contract;
 let account;
 
-const CONTRACT_ADDRESS = "0xCCc0F45E8bE87022ea3E553BdD2f64cD6aAeed79";
+const CONTRACT_ADDRESS = "0xF4F2850761BDdDC14f763299622c49F669945e05";
 const COMPILED_JSON_PATH = "./static/compiledcccode.json"; // serve this from your static folder
 
 // ---- helper: load ABI from compiled JSON ----
