@@ -182,10 +182,10 @@ contract CredChain is ERC721URIStorage, Ownable {
     }
 
     function _getBadgeURI(uint256 milestone) internal pure returns (string memory) {
-        if (milestone == 3) return "ipfs://bafkreift27qf2ecqpdj3sumeat7cqwl23qk6gprev2lujsmodcyyqgigsa";
-        if (milestone == 5) return "ipfs://bafkreiamem4eaij3jqxpxjtj2ylcpx2letvbw3h6ohv6b47ujnmlhu3nqe";
-        if (milestone == 7) return "ipfs://bafkreif2wltsod6tekskq646abpwwaiq4tzdfodtmg2is7lfjub7gsw7w4";
-        if (milestone == 10) return "ipfs://bafkreihtukqrui2ydjoznexhondrpzlovf3jzuhvyjmcob4krsl5wtbexe";
+        if (milestone == 3) return "ipfs://bafkreicv5dfawhicub6eqczpoc33usngvqu6f2wc44ifremswcbiw7rxla";
+        if (milestone == 5) return "ipfs://bafkreif4fn7jdzzwhkbmjd2rj3ic64ratnaxoc3igec4ajk4prf6opue6a";
+        if (milestone == 7) return "ipfs://bafkreibjpdj6hjsntunkgh2p2u7tnbiqezsrvr7sz7uk2wmgcxwxtiohei";
+        if (milestone == 10) return "ipfs://bafkreiaqyd44qp5i6bmpm6a4qlvoni4snljav42bzvrze3koob7dbih2pi";
         return "";
     }
 
