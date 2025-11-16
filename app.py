@@ -79,67 +79,6 @@ def save_profiles():
 
 load_profiles()
 
-#-----------------------------------------------------------SMART CONTRACT DEPLOYMENT-----------------------------------------------------------
-def deploysmartcontract():                                  #deployment function call
-    print("Contract Deployment Function Triggered")
-    contractaddress,abi=depoly_contract()  
-    global contract
-
-    with open("./static/compiledcccode.json","r") as file:
-        compiledsol = json.load(file) 
-    abi=compiledsol["contracts"]["chaincred.sol"]["CredChain"]["abi"]
-
-    with open("static\js\credchain_abi.js", "w") as out:
-        out.write("const CONTRACT_ABI = ")
-        out.write(json.dumps(abi))
-        out.write(";")
-
-    contract=w3.eth.contract(address=contractaddress, abi=abi)
-    
-
-def getsmartcontract():                                  #deployment function call
-    print("Getting Contract Address")  
-    
-    with open("./static/compiledcccode.json","r") as file:
-        compiledsol = json.load(file) 
-    abi=compiledsol["contracts"]["chaincred.sol"]["CredChain"]["abi"]
-
-    with open("static\js\credchain_abi.js", "w") as out:
-        out.write("const CONTRACT_ABI = ")
-        out.write(json.dumps(abi))
-        out.write(";")
-
-    global contract
-    contract=w3.eth.contract(address="0xF4F2850761BDdDC14f763299622c49F669945e05", abi=abi)
-
-#-----------------------------------------------------------CALL FUNCTIONS-----------------------------------------------------------
-'''def callfeature(feature):
-    print("Function Call Recieved!!")
-    balance = w3.eth.get_balance(Web3.to_checksum_address(wallet))
-    print("Balance:", w3.from_wei(balance, "ether"), "DEV")
-
-    
-    #fetching nonce(latest transaction) of our wallet
-    nonce=w3.eth.get_transaction_count(MYADDRESS,"pending")
-
-    feature_transaction=feature.build_transaction(       #call function by building a transaction
-        {"chainId":chainid,
-        "from": MYADDRESS,
-        "nonce":nonce,
-        "gas": 7000000,
-        "gasPrice": w3.to_wei("20", "gwei")}
-    )
-    
-    signedfeature_transaction=w3.eth.account.sign_transaction(feature_transaction,private_key=SECRETCODE)  #sign that transaction
-    feature_transactionhash=w3.eth.send_raw_transaction(signedfeature_transaction.raw_transaction)    #generate transcation hash
-    print("Transcation hash:", feature_transactionhash.hex())
-
-    feature_transactionreceipt=w3.eth.wait_for_transaction_receipt(feature_transactionhash)   #fetch the transaction receipt
-    return feature_transactionreceipt'''
-
-
-def owner_account():
-    return w3.eth.account.from_key(SECRETCODE)
 
 #-----------------------------------------------------------VERIFY USER: WORKS-----------------------------------------------------------
 @app.route("/verifyuser", methods=["POST"])
@@ -212,116 +151,6 @@ def hash_project():
 def send_builders():
     return send_from_directory(".", "builders.json", mimetype='application/json')
 
-#-----------------------------------------------------------GET ALL PROJECTS(CLIENT): WORKING-----------------------------------------------------------
-'''@app.route("/get_projects_for_client/<wallet>")
-def get_projects_for_client(wallet):
-    projects = []
-    getsmartcontract()
-    
-    for builder in KNOWN_BUILDERS:  
-        count = contract.functions.getProjectCount(Web3.to_checksum_address(builder)).call()
-        for i in range(count):
-            p = contract.functions.getProject(Web3.to_checksum_address(builder), i).call()
-            if Web3.to_checksum_address(p[0]) == Web3.to_checksum_address(wallet):  # client matches
-                projects.append({
-                "freelancer": builder,
-                "projectName": p[1],
-                "description": p[2],
-                "languages": p[3],
-                "projectHash": p[4],
-                "link": p[5],
-                "verified": p[6],
-                "timestamp": p[7]
-            })
-    return jsonify(projects)
-
-
-#-----------------------------------------------------------REVIEW-----------------------------------------------------------
-@app.route("/submit_review", methods=["POST"])
-def submit_review():
-    getsmartcontract()
-    data = request.get_json()
-    freelancer = data.get("freelancer")
-    project_index = int(data.get("project_index"))
-    rating = int(data.get("rating"))
-    comment_hash = data.get("comment_hash")  # optional IPFS comment link
-
-
-    fn = contract.functions.submitReview(
-        Web3.to_checksum_address(freelancer),
-        project_index,
-        rating,
-        comment_hash
-    )
-    receipt = callfeature(fn)
-    return jsonify({"tx": receipt.transactionHash.hex()})
-
-
-#-----------------------------------------------------------GET PROJECT WITH REVIEWS-----------------------------------------------------------
-@app.route("/get_project_with_reviews", methods=["GET"])
-def get_project_with_reviews():
-    builder = request.args.get("builder")
-    index = request.args.get("index", type=int)
-
-    if not builder or index is None:
-        return jsonify({"error": "builder and index required"}), 400
-
-    try:
-        # Fetch full project details with all fields
-        result = contract.functions.getProjectReviews(
-            Web3.to_checksum_address(builder),
-            index
-        ).call()
-
-        reviews_raw = result
-        print(reviews_raw)
-
-        # Format reviews
-        reviews = [
-            {
-                "reviewer": r[0],
-                "projectIndex": r[1],
-                "rating": r[2],
-                "commentHash": r[3]
-            }
-            for r in reviews_raw
-        ]
-
-        return jsonify({
-
-            "reviews": reviews
-        })
-
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
-
-'''
-# ----------------------------------------------------------- GET ALL REVIEWS (BUILDER) -----------------------------------------------------------
-@app.route("/get_all_reviews/<builder>", methods=["GET"])
-def get_all_reviews(builder):
-    """Fetch all reviews received by a specific freelancer."""
-    try:
-        result = contract.functions.getAllReviews(Web3.to_checksum_address(builder)).call()
-
-        # Format reviews for readability
-        formatted_reviews = [
-            {
-                "reviewer": r[0],
-                "projectIndex": r[1],
-                "rating": r[2],
-                "commentHash": r[3]
-            }
-            for r in result
-        ]
-
-        return jsonify({
-            "builder": builder,
-            "reviewCount": len(formatted_reviews),
-            "reviews": formatted_reviews
-        })
-
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
     
 
 # ---------------- Create or Update Freelancer Profile ----------------
@@ -404,7 +233,6 @@ def search_freelancers(lang):
             })
 
     return jsonify(results)
-
 
 
 if __name__=="__main__":
