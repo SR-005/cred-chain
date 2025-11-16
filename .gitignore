@@ -1,3 +1,6 @@
 /web3chaincred
 .env
 /node_modules
+__pycache__/
+*.pyc
+*.pyo

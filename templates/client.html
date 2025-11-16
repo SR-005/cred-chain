@@ -80,6 +80,21 @@
 
   <button id="connect">🔗 Connect MetaMask</button>
   <div id="addr"></div>
+  
+  <div class="section">
+  <h2>👤 Client Profile</h2>
+
+  <input id="cName" placeholder="Your Name"><br>
+  <input id="cCompany" placeholder="Company Name"><br>
+  <input id="cEmail" placeholder="Email"><br>
+  <input id="cPhone" placeholder="Phone"><br>
+
+  <button id="saveClient">Save Profile</button>
+
+  <h3>Saved Profile:</h3>
+  <div id="clientProfileBox">No data loaded.</div>
+</div>
+
 
   <div class="section">
     <h2>🔍 Search Freelancers by Language</h2>
@@ -108,22 +123,72 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     let account;
 
-    // ----------------------------------------------------------
-    // CONNECT WALLET
-    // ----------------------------------------------------------
+  //-----------------------------------------------------------CREATE CLIENT PROFILE-----------------------------------------------------------
+    document.getElementById("saveClient").onclick = async () => {
+        if (!account) {
+            alert("Connect wallet first!");
+            return;
+        }
+
+        const name = document.getElementById("cName").value;
+        const company = document.getElementById("cCompany").value;
+        const email = document.getElementById("cEmail").value;
+        const phone = document.getElementById("cPhone").value;
+
+        const res = await fetch("http://localhost:5000/save_client_profile", {
+            method: "POST",
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify({
+                wallet: account,
+                name, company, email, phone
+            })
+        });
+
+        const data = await res.json();
+
+        if (data.success) {
+            alert("Client profile saved!");
+            loadClientProfile();
+        }
+    };
+    
+  //-----------------------------------------------------------LOAD CLIENT PROFILE-----------------------------------------------------------
+    async function loadClientProfile() {
+      if (!account) return;
+
+      const res = await fetch(`http://localhost:5000/get_client_profile/${account}`);
+      const data = await res.json();
+
+      const box = document.getElementById("clientProfileBox");
+
+      if (!data.exists) {
+          box.innerHTML = "No profile found.";
+          return;
+      }
+
+      const p = data.profile;
+
+      box.innerHTML = `
+        <b>Name:</b> ${p.name || "-"}<br>
+        <b>Company:</b> ${p.company || "-"}<br>
+        <b>Email:</b> ${p.email || "-"}<br>
+        <b>Phone:</b> ${p.phone || "-"}<br>
+      `;
+  }
+
+  //-----------------------------------------------------------CONNECT-----------------------------------------------------------
     document.getElementById("connect").onclick = async () => {
         try {
             const addr = await window.connectWallet();  // from credchain.js
             account = addr;
             document.getElementById("addr").innerText = "Connected: " + addr;
+            loadClientProfile();
         } catch (e) {
             alert("Connection failed: " + e.message);
         }
     };
 
-    // ----------------------------------------------------------
-    // VERIFY USER
-    // ----------------------------------------------------------
+  //-----------------------------------------------------------VERIFICATION-----------------------------------------------------------
     document.getElementById("verify").onclick = async () => {
         const link = document.getElementById("profileLink").value;
 
@@ -144,9 +209,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         alert("Verified On Chain!\nWallet: " + wallet + "\nTx: " + tx.transactionHash);
     };
 
-    // ----------------------------------------------------------
-    // LOAD PROJECTS
-    // ----------------------------------------------------------
+  //-----------------------------------------------------------LOAD PROJECTS+REVIEWS-----------------------------------------------------------
     async function loadClientProjects() {
         if (!account) {
           alert("Connect wallet first!");
@@ -222,9 +285,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     document.getElementById("loadClientProjects").onclick = loadClientProjects;
 
 
-    // ----------------------------------------------------------
-    // SUBMIT REVIEW
-    // ----------------------------------------------------------
+  //-----------------------------------------------------------SUBMIT REVIEWS-----------------------------------------------------------
     window.submitReview = async (freelancer, projectIndex) => {
         const rating = parseInt(document.getElementById(`rating-${freelancer}-${projectIndex}`).value);
         const comment_hash = document.getElementById(`comment-${freelancer}-${projectIndex}`).value.trim();
@@ -287,9 +348,6 @@ document.addEventListener("DOMContentLoaded", async () => {
 
       document.getElementById("searchResults").innerHTML = html;
   };
-
-  //----------------------------------------------------------LOAD PROJECTS----------------------------------------------------------
-
 
 });
 </script>

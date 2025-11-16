@@ -194,7 +194,7 @@ export async function getAllProjectsFromChain(builder) {
     }
 }
 
-
+//-----------------------------------------------------------GET PROJECTS+REVIEW: CLIENT-----------------------------------------------------------
 async function loadBuildersJson() {
     try {
         const res = await fetch("/builders.json");   // NOW WORKS
@@ -206,7 +206,6 @@ async function loadBuildersJson() {
         return [];
     }
 }
-
 
 export async function getProjectsForClient(wallet) {
     if (!contract) await initContract();
@@ -249,8 +248,6 @@ export async function getProjectsForClient(wallet) {
     return projects;
 }
 
-
-
 export async function getProjectReviewsFromChain(builder, index) {
     if (!contract) await initContract();
 
@@ -273,7 +270,6 @@ export async function getProjectReviewsFromChain(builder, index) {
         return [];
     }
 }
-
 
 
 window.connectWallet = connectWallet;

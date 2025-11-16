@@ -50,19 +50,6 @@ def save_builders():
 load_builders()
 
 
-PENDING_FILE = "pending.json"
-def load_pending():
-    global PENDING_PROJECTS
-    if os.path.exists(PENDING_FILE):
-        with open(PENDING_FILE, "r") as f:
-            PENDING_PROJECTS = json.load(f)
-    else:
-        PENDING_PROJECTS = []
-
-def save_pending():
-    with open(PENDING_FILE, "w") as f:
-        json.dump(PENDING_PROJECTS, f, indent=2)
-
 PROFILES_FILE = "profiles.json"
 # Load or initialize profiles
 def load_profiles():
@@ -76,8 +63,21 @@ def load_profiles():
 def save_profiles():
     with open(PROFILES_FILE, "w") as f:
         json.dump(PROFILES, f, indent=2)
-
 load_profiles()
+
+CLIENTS = {}
+def load_clients():
+    global CLIENTS
+    try:
+        with open("clients.json", "r") as f:
+            CLIENTS = json.load(f)
+    except:
+        CLIENTS = {}
+
+def save_clients():
+    with open("clients.json", "w") as f:
+        json.dump(CLIENTS, f, indent=4)
+
 
 
 #-----------------------------------------------------------VERIFY USER: WORKS-----------------------------------------------------------
@@ -150,10 +150,8 @@ def hash_project():
 @app.route("/builders.json")
 def send_builders():
     return send_from_directory(".", "builders.json", mimetype='application/json')
-
     
-
-# ---------------- Create or Update Freelancer Profile ----------------
+# -----------------------------------------------------------CREATE/EDIT FREELANCER PROFILE-----------------------------------------------------------
 @app.route("/create_profile", methods=["POST"])
 def create_profile():
     """
@@ -191,7 +189,7 @@ def create_profile():
     save_profiles()
     return jsonify({"status": "Profile saved", "wallet": wallet})
 
-# -----------------------------------------------------------GET PROFILE(FREELANCER): WORKING-----------------------------------------------------------
+# -----------------------------------------------------------DISPLAY PROFILE(FREELANCER)-----------------------------------------------------------
 @app.route("/get_profile/<wallet>", methods=["GET"])
 def get_profile(wallet):
     wallet = wallet.lower()
@@ -202,6 +200,7 @@ def get_profile(wallet):
 
     return jsonify(PROFILES[wallet])
 
+# -----------------------------------------------------------SEARCH FOR FREELANCER-----------------------------------------------------------
 @app.route("/search_freelancers/<lang>")
 def search_freelancers(lang):
     lang = lang.lower()
@@ -233,6 +232,48 @@ def search_freelancers(lang):
             })
 
     return jsonify(results)
+
+# -----------------------------------------------------------CREATE CLIENT PROFILE-----------------------------------------------------------
+@app.route("/save_client_profile", methods=["POST"])
+def save_client_profile():
+    data = request.get_json() or {}
+
+    wallet = data.get("wallet")
+    name = data.get("name")
+    company = data.get("company")
+    email = data.get("email")
+    phone = data.get("phone")
+
+    if not wallet:
+        return jsonify({"error": "Wallet required"}), 400
+
+    load_clients()
+
+    CLIENTS[wallet.lower()] = {
+        "name": name,
+        "company": company,
+        "email": email,
+        "phone": phone
+    }
+
+    save_clients()
+
+    return jsonify({"success": True})
+
+# -----------------------------------------------------------DISPLAY CLIENT PROFILE-----------------------------------------------------------
+@app.route("/get_client_profile/<wallet>", methods=["GET"])
+def get_client_profile(wallet):
+    load_clients()
+
+    profile = CLIENTS.get(wallet.lower())
+
+    if not profile:
+        return jsonify({"exists": False})
+
+    return jsonify({
+        "exists": True,
+        "profile": profile
+    })
 
 
 if __name__=="__main__":
