@@ -81,6 +81,14 @@
   <button id="connect">🔗 Connect MetaMask</button>
   <div id="addr"></div>
 
+  <div class="section">
+    <h2>🔍 Search Freelancers by Language</h2>
+    <input id="searchInput" placeholder="ex: python, react, rust" />
+    <button id="searchBtn">Search</button>
+    <div id="searchResults"></div>
+  </div>
+
+
   <h3>Verify Identity (LinkedIn)</h3>
   <input id="profileLink" placeholder="https://linkedin.com/in/..."/>
   <button id="verify">Verify</button>
@@ -229,6 +237,54 @@ document.addEventListener("DOMContentLoaded", async () => {
 
         loadClientProjects();
     };
+
+    document.getElementById("searchBtn").onclick = async () => {
+    const q = document.getElementById("searchInput").value.trim().toLowerCase();
+
+    if (!q) {
+        document.getElementById("searchResults").innerHTML = "<p>Please enter a language.</p>";
+        return;
+    }
+
+    const res = await fetch(`http://localhost:5000/search_freelancers/${q}`);
+    const data = await res.json();
+
+    if (!data.length) {
+        document.getElementById("searchResults").innerHTML = 
+            `<p style="color:red;">No freelancers found for "${q}"</p>`;
+        return;
+    }
+
+    let html = "";
+    data.forEach((f, idx) => {
+      html += `
+          <div class="project-card">
+              <h3>Freelancer #${idx + 1}</h3>
+              
+              <b>Name:</b> ${f.name || "Unnamed"}<br>
+              <b>Wallet:</b> ${f.wallet}<br>
+              <b>Bio:</b> ${f.bio || "No bio"}<br>
+              <b>Skills:</b> ${f.skills?.join(", ") || "Not listed"}<br>
+
+              <b>GitHub:</b> ${
+                  f.github 
+                  ? `<a href="${f.github}" target="_blank">${f.github}</a>` 
+                  : "Not linked"
+              }<br>
+
+              <b>LinkedIn:</b> ${
+                  f.linkedin 
+                  ? `<a href="${f.linkedin}" target="_blank">${f.linkedin}</a>` 
+                  : "Not linked"
+              }<br>
+          </div>
+      `;
+  });
+
+
+      document.getElementById("searchResults").innerHTML = html;
+  };
+
 
 });
 </script>

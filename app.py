@@ -28,7 +28,7 @@ def home():
 
 @app.route('/')
 def user():
-    return render_template('home.html')
+    return render_template('index.html')
 
 @app.route('/client')
 def clientpage():
@@ -463,6 +463,40 @@ def get_profile(wallet):
         return jsonify({"error": "Profile not found"}), 404
 
     return jsonify(PROFILES[wallet])
+
+@app.route("/search_freelancers/<lang>")
+def search_freelancers(lang):
+    lang = lang.lower()
+    load_profiles()
+
+    results = []
+
+    for wallet, profile in PROFILES.items():
+
+        # missing profile fields
+        skills = profile.get("skills", [])
+        name = profile.get("name", "")
+        bio = profile.get("bio", "")
+        github = profile.get("github", "")
+        linkedin = profile.get("linkedin", "")
+
+        # normalize skills
+        normalized_skills = [s.lower() for s in skills]
+
+        # check match
+        if lang in normalized_skills:
+            results.append({
+                "wallet": wallet,
+                "name": name,
+                "bio": bio,
+                "skills": skills,
+                "github": github,
+                "linkedin": linkedin
+            })
+
+    return jsonify(results)
+
+
 
 if __name__=="__main__":
     app.run(debug=True)
