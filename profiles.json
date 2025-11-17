@@ -1,12 +1,13 @@
 {
   "0xdfda8340978b38d93114fae615144e895a75ebb2": {
     "name": "Sreeram V Gopal",
-    "bio": "I love creating with code \u2014 sometimes useful, sometimes weird, always interesting.",
+    "bio": "",
     "skills": [
-      "Python"
+      "Python",
+      "Solidity"
     ],
     "github": "https://github.com/SR-005",
-    "linkedin": "I love creating with code \u2014 sometimes useful, sometimes weird, always interesting.",
+    "linkedin": "https://www.linkedin.com/in/sreeram-v-gopal-7477082a0",
     "email": "sreeramvg100@gmail.com",
     "phone": "9744902099"
   },
