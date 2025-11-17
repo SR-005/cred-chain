@@ -30,16 +30,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     // Logout Logic
-    const logoutBtn = document.getElementById('logoutBtn');
-    if(logoutBtn) {
-        logoutBtn.addEventListener('click', () => {
-            if(confirm("Are you sure you want to disconnect?")) {
-                localStorage.removeItem('userWalletAddress');
-                localStorage.removeItem('userRole');
-                window.location.href = '/wallet-login';
-            }
-        });
-    }
+    document.getElementById('logoutBtn').addEventListener('click', () => {
+        if(confirm("Are you sure you want to disconnect?")) {
+            localStorage.removeItem('userWalletAddress');
+            localStorage.removeItem('userRole');
+            window.location.href = '/wallet-login';
+        }
+    });
 });
 
 /**
@@ -62,7 +59,7 @@ async function loadEmployerProfile() {
             phoneEl.innerText = data.profile.phone || "No phone provided";
         } else {
             nameEl.innerText = "Profile Not Found";
-            compEl.innerText = "Please click 'Edit Profile'";
+            compEl.innerText = "Please click 'Edit Company Profile'";
         }
     } catch (err) {
         console.error("Error fetching profile:", err);
@@ -76,33 +73,63 @@ async function loadEmployerProfile() {
 async function loadClientProjects() {
     const container = document.getElementById('client-projects-list');
     try {
-        const res = await fetch(`/get_projects_for_client/${account}`);
-        const projects = await res.json();
+        // 1. Ensure web3 function is loaded
+        if (typeof window.getAllProjectsFromChain !== 'function') {
+             const mod = await import('/static/js/credchain.js');
+             window.getAllProjectsFromChain = mod.getAllProjectsFromChain;
+        }
 
-        if (projects.length === 0) {
-            container.innerHTML = "<p class='text-light-muted italic'>No projects found assigned to this wallet.</p>";
+        // 2. Get list of builders
+        const buildersRes = await fetch('/builders.json');
+        if (!buildersRes.ok) throw new Error("Could not load builders");
+        const builders = await buildersRes.json();
+
+        // 3. Fetch projects for ALL builders in parallel
+        const promises = builders.map(builderAddr => window.getAllProjectsFromChain(builderAddr));
+        const results = await Promise.all(promises);
+
+        // 4. Filter for MY projects
+        const myProjects = [];
+        results.forEach((builderProjects, i) => {
+            const freelancerAddr = builders[i];
+            builderProjects.forEach((p, index) => {
+                if (p.client.toLowerCase() === account) {
+                    myProjects.push({
+                        ...p,
+                        freelancer: freelancerAddr,
+                        index: index 
+                    });
+                }
+            });
+        });
+
+        // 5. Render
+        if (myProjects.length === 0) {
+            container.innerHTML = "<p class='text-light-muted italic text-center'>No projects found assigned to this wallet.</p>";
             return;
         }
 
-        container.innerHTML = projects.map((p) => `
+        container.innerHTML = myProjects.map((p) => `
             <div class="bg-primary-dark border border-gray-600 rounded-lg p-6 flex flex-col sm:flex-row justify-between items-start gap-4 hover:border-blue-500 transition duration-200">
                 <div class="flex-grow">
-                    <h4 class="text-lg font-bold text-white">${p.projectName}</h4>
-                    <p class="text-light-muted text-sm mb-2">${p.description}</p>
-                    
-                    <div class="flex flex-wrap gap-4 mt-2">
-                        <p class="text-xs text-blue-300 bg-blue-900/30 px-2 py-1 rounded">
-                            <ion-icon name="person-outline" class="align-middle"></ion-icon>
-                            <span class="font-mono ml-1">${p.freelancer}</span>
-                        </p>
-                        <p class="text-xs text-gray-400 bg-gray-800 px-2 py-1 rounded">
-                            <ion-icon name="link-outline" class="align-middle"></ion-icon>
-                            Link: <a href="${p.link}" target="_blank" class="hover:text-white hover:underline">View Project</a>
-                        </p>
+                    <div class="flex justify-between items-center mb-2">
+                        <h4 class="text-lg font-bold text-white">${p.projectName}</h4>
+                        <span class="text-xs ${p.verified ? 'bg-green-900 text-green-200' : 'bg-yellow-900 text-yellow-200'} px-2 py-1 rounded">
+                            ${p.verified ? "Verified" : "Pending"}
+                        </span>
+                    </div>
+                    <p class="text-light-muted text-sm mb-3">${p.description}</p>
+                    <div class="flex flex-wrap gap-3 text-xs">
+                        <span class="bg-blue-900/30 text-blue-300 px-2 py-1 rounded border border-blue-900">
+                            Developer: ${p.freelancer.substring(0, 6)}...${p.freelancer.substring(p.freelancer.length - 4)}
+                        </span>
+                        <a href="${p.link}" target="_blank" class="bg-gray-800 text-gray-300 px-2 py-1 rounded hover:bg-gray-700 flex items-center gap-1">
+                            <ion-icon name="link"></ion-icon> Source
+                        </a>
                     </div>
                 </div>
                 <button onclick="openReviewModal('${p.freelancer}', ${p.index})" 
-                        class="bg-green-600 hover:bg-green-500 text-white px-6 py-2 rounded-lg text-sm font-bold shadow-lg transition transform hover:-translate-y-0.5">
+                        class="bg-green-600 hover:bg-green-500 text-white px-6 py-2 rounded-lg text-sm font-bold shadow-lg transition transform hover:-translate-y-0.5 whitespace-nowrap">
                     Review
                 </button>
             </div>
@@ -110,7 +137,7 @@ async function loadClientProjects() {
 
     } catch (err) {
         console.error(err);
-        container.innerHTML = "<p class='text-red-400'>Error loading projects. Ensure backend is running.</p>";
+        container.innerHTML = "<p class='text-red-400 text-center'>Failed to load projects.</p>";
     }
 }
 
@@ -126,7 +153,6 @@ window.closeReviewModal = () => {
     currentReviewData = null;
 };
 
-// === FIXED SUBMIT REVIEW FUNCTION ===
 window.submitReview = async () => {
     if (!currentReviewData) return;
 
@@ -139,19 +165,18 @@ window.submitReview = async () => {
         return;
     }
 
-    // 1. Check if web3 script is loaded
+    // 1. Check if function exists
     if (typeof window.submitReviewOnChain !== 'function') {
-        alert("Wallet connection script not loaded. Please refresh.");
-        return;
+        const mod = await import('/static/js/credchain.js');
+        window.submitReviewOnChain = mod.submitReviewOnChain;
     }
 
-    // 2. Disable button
     const originalText = btn.innerText;
     btn.innerText = "Confirm in Wallet...";
     btn.disabled = true;
 
     try {
-        // 3. Call Frontend Web3 Function (MetaMask)
+        // 2. Submit to Chain
         const receipt = await window.submitReviewOnChain(
             currentReviewData.freelancer,
             currentReviewData.index,
@@ -159,22 +184,20 @@ window.submitReview = async () => {
             comment
         );
 
-        console.log("Review Receipt:", receipt);
-
-        // 4. Success
         alert("Review Submitted Successfully!\nTx Hash: " + receipt.transactionHash);
         closeReviewModal();
-        
-        // Clear inputs
         document.getElementById('reviewRating').value = '';
         document.getElementById('reviewComment').value = '';
+        
+        // Refresh the list
+        loadClientProjects();
 
     } catch (err) {
         console.error(err);
-        if(err.message.includes("User denied")) {
+        if(err.message && err.message.includes("User denied")) {
             alert("Transaction rejected.");
-        } else if (err.message.includes("Already reviewed")) {
-            alert("You have already reviewed this project!");
+        } else if (err.message && err.message.includes("Already reviewed")) {
+             alert("You have already reviewed this project!");
         } else {
             alert("Review failed: " + err.message);
         }
