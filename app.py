@@ -4,16 +4,10 @@ import json
 import hashlib
 from dotenv import load_dotenv
 from pathlib import Path
-from flask import Flask, jsonify, render_template, request, send_from_directory
+from flask import Flask,jsonify,render_template,request,send_from_directory
 from flask_cors import CORS
 from web3 import Web3
-# Included the original import just in case, though unused in this snippet
-from deploy import depoly_contract 
 from routes import routes 
-
-load_dotenv()
-MYADDRESS = Web3.to_checksum_address(os.getenv("METAMASK"))
-SECRETCODE = os.getenv("SECRETKEY")
 
 w3 = Web3(Web3.HTTPProvider("https://rpc.api.moonbase.moonbeam.network"))
 chainid=1287
@@ -22,39 +16,18 @@ app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": ["http://localhost:5000", "http://127.0.0.1:5000"]}})
 app.register_blueprint(routes) 
 
-# --- 1. ROUTE MERGE ---
-# You likely want home.html as the landing page
-@app.route('/')
-def home():
-    return render_template('home.html')
 
-# Keep the original routes accessible if needed, or rename them
-@app.route('/user')
+'''@app.route('/')
+def home():
+    return render_template('home.html')'''
+
+@app.route('/')
 def user():
     return render_template('index.html')
 
 @app.route('/client')
 def clientpage():
     return render_template('client.html')
-
-# --- 2. YOUR NEW FEATURE ---
-@app.route("/get_all_freelancers", methods=["GET"])
-def get_all_freelancers():
-    load_profiles()
-    results = []
-    
-    for wallet, profile in PROFILES.items():
-        results.append({
-            "wallet": wallet,
-            "name": profile.get("name", "Unnamed User"),
-            "bio": profile.get("bio", "No bio provided."),
-            "skills": profile.get("skills", []),
-            "github": profile.get("github", ""),
-            "linkedin": profile.get("linkedin", ""),
-        })
-        
-    return jsonify(results)
-
 
 #-----------------------------------------------------------JSON FILES-----------------------------------------------------------
 BUILDERS_FILE = "builders.json"
@@ -73,6 +46,7 @@ load_builders()
 
 
 PROFILES_FILE = "profiles.json"
+# Load or initialize profiles
 def load_profiles():
     global PROFILES
     if os.path.exists(PROFILES_FILE):
@@ -100,13 +74,17 @@ def save_clients():
         json.dump(CLIENTS, f, indent=4)
 
 
-#-----------------------------------------------------------VERIFY USER-----------------------------------------------------------
+
+#-----------------------------------------------------------VERIFY USER: WORKS-----------------------------------------------------------
 @app.route("/verifyuser", methods=["POST"])
 def verifyuser():
+    
     data = request.get_json() or {}
+    global wallet
     wallet = data.get("wallet")
     link = data.get("profile_link")
 
+    #conditions
     if not wallet:
         return jsonify({"valid": False, "reason": "Wallet missing"}), 400
     if not link:
@@ -118,9 +96,11 @@ def verifyuser():
         r = requests.get(link, timeout=10, headers={"User-Agent": "CredChainVerifier/1.0"})
         if r.status_code == 404:
             return jsonify({"valid": False, "reason": "GitHub page not found"}), 400
+
     except Exception as e:
         return jsonify({"valid": False, "reason": f"Request failed: {str(e)}"}), 400
 
+    # Save GitHub link
     load_profiles()
     w = wallet.lower()
     if w not in PROFILES:
@@ -131,7 +111,7 @@ def verifyuser():
     print("Github Link Verified by Backend")
     return jsonify({"valid": True})
 
-# --- 3. RESTORED HASH PROJECT (From Original) ---
+#-----------------------------------------------------------PROJECT HASHING: WORKS-----------------------------------------------------------
 @app.route("/hash_project", methods=["POST"])
 def hash_project():
     data = request.get_json()
@@ -152,11 +132,12 @@ def hash_project():
         return jsonify({"error": str(e)}), 400
 
     h = hashlib.sha256(content).hexdigest()
-    
+        # Track builder for dashboard use
     if wallet and wallet not in ["null", "None"]:
         KNOWN_BUILDERS.add(wallet)
         save_builders()
     print("Hash of the Project: ",h)
+
 
     return jsonify({"hash": h})
 
@@ -168,20 +149,33 @@ def send_builders():
 # -----------------------------------------------------------CREATE/EDIT FREELANCER PROFILE-----------------------------------------------------------
 @app.route("/create_profile", methods=["POST"])
 def create_profile():
+    """
+    Request JSON Example:
+    {
+        "wallet": "0xFreelancerWallet",
+        "name": "John Doe",
+        "bio": "Blockchain developer and data scientist.",
+        "skills": ["Solidity", "Python", "Flask"],
+        "github": "https://github.com/johndoe",
+        "linkedin": "https://linkedin.com/in/johndoe",
+        "profile_pic": "ipfs://QmHash..."
+    }
+    """
     data = request.get_json()
     wallet = data.get("wallet")
 
     if not wallet:
         return jsonify({"error": "wallet required"}), 400
 
+    # Normalize wallet (lowercase for key consistency)
     wallet = wallet.lower()
-    load_profiles()
 
+    # Update or create
     PROFILES[wallet] = {
         "name": data.get("name", ""),
         "bio": data.get("bio", ""),
         "skills": data.get("skills", []),
-        "github": PROFILES.get(wallet, {}).get("github", ""), # Keep existing github if verified
+        "github": PROFILES[wallet].get("github", ""),
         "linkedin": data.get("linkedin", ""),
         "email": data.get("email", ""),
         "phone": data.get("phone", "")
@@ -208,11 +202,16 @@ def search_freelancers(lang):
     load_profiles()
 
     results = []
+
     for wallet, profile in PROFILES.items():
         skills = profile.get("skills", [])
-        normalized_skills = [s.lower() for s in skills]
+        normalized = [s.lower() for s in skills]
 
-        if lang in normalized_skills:
+        if lang in normalized:
+            print("Wallet: ",wallet)
+
+
+        if lang in normalized:
             results.append({
                 "wallet": wallet,
                 "name": profile.get("name", ""),
@@ -224,31 +223,48 @@ def search_freelancers(lang):
 
     return jsonify(results)
 
+
 # -----------------------------------------------------------CREATE CLIENT PROFILE-----------------------------------------------------------
 @app.route("/save_client_profile", methods=["POST"])
 def save_client_profile():
     data = request.get_json() or {}
-    wallet = data.get("wallet")
 
-    if not wallet: return jsonify({"error": "Wallet required"}), 400
+    wallet = data.get("wallet")
+    name = data.get("name")
+    company = data.get("company")
+    email = data.get("email")
+    phone = data.get("phone")
+
+    if not wallet:
+        return jsonify({"error": "Wallet required"}), 400
 
     load_clients()
+
     CLIENTS[wallet.lower()] = {
-        "name": data.get("name"),
-        "company": data.get("company"),
-        "email": data.get("email"),
-        "phone": data.get("phone")
+        "name": name,
+        "company": company,
+        "email": email,
+        "phone": phone
     }
+
     save_clients()
+
     return jsonify({"success": True})
 
 # -----------------------------------------------------------DISPLAY CLIENT PROFILE-----------------------------------------------------------
 @app.route("/get_client_profile/<wallet>", methods=["GET"])
 def get_client_profile(wallet):
     load_clients()
+
     profile = CLIENTS.get(wallet.lower())
-    if not profile: return jsonify({"exists": False})
-    return jsonify({"exists": True, "profile": profile})
+
+    if not profile:
+        return jsonify({"exists": False})
+
+    return jsonify({
+        "exists": True,
+        "profile": profile
+    })
 
 
 if __name__=="__main__":

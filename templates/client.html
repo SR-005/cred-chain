@@ -98,7 +98,7 @@
 
   <div class="section">
     <h2>🔍 Search Freelancers by Language</h2>
-    <input id="searchInput" placeholder="ex: python, react, rust" />
+    <input id="searchLang" placeholder="ex: python, react, rust" />
     <button id="searchBtn">Search</button>
     <div id="searchResults"></div>
   </div>
@@ -348,6 +348,13 @@ document.addEventListener("DOMContentLoaded", async () => {
 
       document.getElementById("searchResults").innerHTML = html;
   };
+
+
+
+document.getElementById("searchBtn").onclick = async () => {
+    const lang = document.getElementById("searchLang").value.toLowerCase();
+    window.searchFreelancers(lang);   // call JS function in credchain.js
+};
 
 });
 </script>

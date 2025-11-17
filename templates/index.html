@@ -111,7 +111,7 @@ async function loadProfile() {
     const box = document.getElementById("profileDisplay");
     box.innerHTML = "<p>Loading…</p>";
 
-    // Load off-chain profile data
+    // 1. Load off-chain profile
     const profile = await fetch(`http://localhost:5000/get_profile/${account}`);
     const pdata = await profile.json();
 
@@ -125,11 +125,32 @@ async function loadProfile() {
       <h3>📁 Projects</h3>
     `;
 
-    // Load blockchain projects directly from smart contract
+    // 2. Load blockchain projects
     const projects = await window.getAllProjectsFromChain(account);
 
     if (projects.length > 0) {
-        projects.forEach((p, i) => {
+        for (let i = 0; i < projects.length; i++) {
+            const p = projects[i];
+
+            // 3. Load reviews for this project
+            const reviews = await window.getProjectReviewsFromChain(account, i);
+
+            let reviewHTML = "";
+            if (reviews.length > 0) {
+                reviewHTML = reviews
+                    .map(
+                        r => `
+                        ⭐ Rating: ${r.rating}<br>
+                        💬 Comment: ${r.commentHash}<br>
+                        👤 Reviewer: ${r.reviewer}<br><br>
+                    `
+                    )
+                    .join("");
+            } else {
+                reviewHTML = "No reviews yet.";
+            }
+
+            // 4. Append project + reviews to UI
             html += `
               <div class="project-card">
                 <b>Project #${i + 1}</b><br>
@@ -139,16 +160,24 @@ async function loadProfile() {
                 <b>Link:</b> <a href="${p.link}" target="_blank">${p.link}</a><br>
                 <b>Verified:</b> ${p.verified ? "Yes" : "No"}<br>
                 <b>Hash:</b> ${p.projectHash}<br>
+                
+                <hr>
+                <b>Reviews:</b><br>
+                <div class="reviews-box">
+                    ${reviewHTML}
+                </div>
               </div>
             `;
-        });
+        }
     } else {
         html += "<p>No projects yet.</p>";
     }
 
     box.innerHTML = html;
 }
+
 document.getElementById("loadProfile").onclick = loadProfile;
+
 
 
 //----------------------------------------------------------SAVE PROFILE: WORKS----------------------------------------------------------

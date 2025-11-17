@@ -271,6 +271,56 @@ export async function getProjectReviewsFromChain(builder, index) {
     }
 }
 
+export async function searchFreelancers(lang) {
+    if (!contract) await initContract();
+
+    try {
+        // 1. Fetch backend profiles (backend returns name, bio, skills)
+        const res = await fetch(`http://localhost:5000/search_freelancers/${lang}`);
+        const freelancers = await res.json();
+
+        // 2. Fetch on-chain project count for each freelancer
+        for (let f of freelancers) {
+            const checksum = web3.utils.toChecksumAddress(f.wallet);
+            const count = await contract.methods.getProjectCount(checksum).call();
+            f.projectCount = Number(count);
+        }
+
+        // 3. Sort by project count, highest first
+        freelancers.sort((a, b) => b.projectCount - a.projectCount);
+
+        // 4. Render results in client.html
+        let html = "";
+        freelancers.forEach((f, i) => {
+            html += `
+                <div class="project-card">
+                    <h3>Freelancer #${i + 1}</h3>
+                    <b>Wallet:</b> ${f.wallet}<br>
+                    <b>Name:</b> ${f.name}<br>
+                    <b>Bio:</b> ${f.bio}<br>
+                    <b>Skills:</b> ${f.skills.join(", ")}<br>
+                    <b>GitHub:</b> ${
+                        f.github ? `<a href="${f.github}" target="_blank">${f.github}</a>` : "Not linked"
+                    }<br>
+                    <b>LinkedIn:</b> ${
+                        f.linkedin ? `<a href="${f.linkedin}" target="_blank">${f.linkedin}</a>` : "Not linked"
+                    }<br>
+                    <b>Projects Completed:</b> ${f.projectCount}<br>
+                </div>
+            `;
+        });
+
+        document.getElementById("searchResults").innerHTML = html;
+
+    } catch (err) {
+        console.error("Search error:", err);
+        document.getElementById("searchResults").innerHTML = "<p>Error loading freelancers</p>";
+    }
+}
+
+// Make available to window
+window.searchFreelancers = searchFreelancers;
+
 
 window.connectWallet = connectWallet;
 window.verifyUserOnChain = verifyUserOnChain;
