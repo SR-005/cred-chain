@@ -1,6 +1,5 @@
 // Fdashboard.js
 const rawAccount = localStorage.getItem('userWalletAddress'); 
-// FIX: Force lowercase to match profiles.json keys
 const account = rawAccount ? rawAccount.toLowerCase() : null;
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -10,7 +9,7 @@ document.addEventListener('DOMContentLoaded', () => {
         return; 
     }
     
-    console.log("Loading dashboard for:", account);
+    // Initial Load
     loadDashboardData();
 
     // Logout Logic
@@ -19,7 +18,6 @@ document.addEventListener('DOMContentLoaded', () => {
         logoutBtn.addEventListener('click', () => {
             if(confirm("Disconnect wallet?")) {
                 localStorage.removeItem('userWalletAddress');
-                localStorage.removeItem('userRole');
                 window.location.href = '/wallet-login';
             }
         });
@@ -32,7 +30,7 @@ document.addEventListener('DOMContentLoaded', () => {
             e.preventDefault();
             const submitBtn = projectForm.querySelector('button[type="submit"]');
             submitBtn.disabled = true;
-            submitBtn.innerText = "Processing...";
+            submitBtn.innerText = "Processing Transaction...";
 
             const body = {
                 wallet: account,
@@ -44,19 +42,17 @@ document.addEventListener('DOMContentLoaded', () => {
             };
 
             try {
-                // 1. Hash
-                const hashRes = await fetch('/hash_project', {
+                const res = await fetch('/hash_project', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify({ link: body.link })
                 });
-                const hashData = await hashRes.json();
+                const hashData = await res.json();
                 
-                if (!hashRes.ok || !hashData.hash) throw new Error("Hashing failed");
+                if (!res.ok || !hashData.hash) throw new Error("Hashing failed");
 
                 submitBtn.innerText = "Confirm in Wallet...";
 
-                // 2. Sign
                 if (typeof window.addProjectOnChain !== 'function') {
                     const mod = await import('/static/js/credchain.js');
                     window.addProjectOnChain = mod.addProjectOnChain;
@@ -140,46 +136,52 @@ async function loadDashboardData() {
     let projectCount = 0;
 
     try {
-        const [profileRes, projRes] = await Promise.all([
+        // Ensure our contract function is loaded
+        if (typeof window.getAllProjectsFromChain !== 'function') {
+             const mod = await import('/static/js/credchain.js');
+             window.getAllProjectsFromChain = mod.getAllProjectsFromChain;
+        }
+
+        // === 1. FETCH DATA IN PARALLEL ===
+        const [profileRes, projects] = await Promise.all([
             fetch(`/get_profile/${account}`),
-            fetch(`/get_all_projects/${account}`)
+            window.getAllProjectsFromChain(account)
         ]);
 
-        // 1. Handle Profile Data
+        // === 2. HANDLE PROFILE DATA ===
         if (profileRes.ok) {
             const pdata = await profileRes.json();
-            console.log("Profile loaded:", pdata); // Debugging
-
+            
             nameEl.innerText = pdata.name || "Unnamed";
             bioEl.innerText = pdata.bio || "No bio provided.";
             avatarEl.innerText = pdata.name ? pdata.name[0].toUpperCase() : "-";
             
-            // Render Skills
-            const skills = Array.isArray(pdata.skills) ? pdata.skills : [];
-            if (skills.length > 0) {
-                skillsEl.innerHTML = skills.map(s => 
+            // Skills
+            if (pdata.skills && pdata.skills.length > 0) {
+                skillsEl.innerHTML = pdata.skills.map(s => 
                     `<span class="bg-primary-dark text-blue-300 text-xs font-semibold px-2 py-1 rounded border border-gray-600">${s}</span>`
                 ).join('');
             } else {
                 skillsEl.innerHTML = '<span class="text-xs text-gray-500 italic">No skills added</span>';
             }
 
-            // Render Socials
+            // Socials
             let socialsHtml = '';
-            if (pdata.github) socialsHtml += `<a href="${pdata.github}" target="_blank" class="text-gray-400 hover:text-white transition text-2xl"><ion-icon name="logo-github"></ion-icon></a>`;
-            if (pdata.linkedin) socialsHtml += `<a href="${pdata.linkedin}" target="_blank" class="text-blue-500 hover:text-blue-400 transition text-2xl"><ion-icon name="logo-linkedin"></ion-icon></a>`;
+            if (pdata.github) {
+                socialsHtml += `<a href="${pdata.github}" target="_blank" class="text-gray-400 hover:text-white transition text-2xl"><ion-icon name="logo-github"></ion-icon></a>`;
+            }
+            if (pdata.linkedin) {
+                socialsHtml += `<a href="${pdata.linkedin}" target="_blank" class="text-blue-500 hover:text-blue-400 transition text-2xl"><ion-icon name="logo-linkedin"></ion-icon></a>`;
+            }
             socialsEl.innerHTML = socialsHtml;
 
-            // Render Contact Info (Important Fix)
-            const emailEl = document.getElementById('contact-email');
-            const phoneEl = document.getElementById('contact-phone');
-            
-            if (pdata.email && pdata.email.trim() !== "") {
-                emailEl.classList.remove('hidden'); // Show the container
+            // Contact Info
+            if (pdata.email) {
+                document.getElementById('contact-email').classList.remove('hidden');
                 document.getElementById('val-email').innerText = pdata.email;
             }
-            if (pdata.phone && pdata.phone.trim() !== "") {
-                phoneEl.classList.remove('hidden'); // Show the container
+            if (pdata.phone) {
+                document.getElementById('contact-phone').classList.remove('hidden');
                 document.getElementById('val-phone').innerText = pdata.phone;
             }
 
@@ -188,37 +190,36 @@ async function loadDashboardData() {
             bioEl.innerText = "Please click 'Edit My Profile' to set up your details.";
         }
 
-        // 2. Handle Projects Data
-        if (projRes.ok) {
-            const data = await projRes.json();
-            const projects = data.projects || [];
-            projectCount = projects.length;
-            displayBadges(projectCount);
-            
-            if(projects.length > 0) {
-                projectsListEl.innerHTML = projects.map((p) => `
-                    <div class="bg-primary-dark border border-gray-700 rounded-lg p-6 mb-4 hover:border-blue-500 transition duration-300">
+        // === 3. HANDLE PROJECTS DATA ===
+        projectCount = projects.length;
+        displayBadges(projectCount);
+        
+        if (projects.length > 0) {
+            projectsListEl.innerHTML = projects.map((p) => `
+                <div class="bg-primary-dark border border-gray-700 rounded-lg p-6 mb-4 hover:border-blue-500 transition duration-300">
+                    <div class="flex justify-between items-start mb-2">
                         <h4 class="text-xl font-bold text-white">${p.projectName}</h4>
-                        <p class="text-light-muted text-sm mt-1">${p.description}</p>
-                        <div class="flex flex-wrap gap-2 mt-3">
-                            <span class="text-xs bg-blue-900 text-blue-200 px-2 py-1 rounded">${p.languages}</span>
-                            <span class="text-xs ${p.verified ? 'bg-green-900 text-green-200' : 'bg-yellow-900 text-yellow-200'} px-2 py-1 rounded">
-                                ${p.verified ? "Verified" : "Pending"}
-                            </span>
-                            <a href="${p.link}" target="_blank" class="text-xs bg-gray-700 text-gray-300 px-2 py-1 rounded hover:bg-gray-600 flex items-center gap-1"><ion-icon name="link"></ion-icon> Code</a>
-                        </div>
-                    </div>`).join('');
-            } else {
-                projectsListEl.innerHTML = `<p class="text-light-muted text-center italic">No projects found on-chain.</p>`;
-            }
+                        <span class="text-xs ${p.verified ? 'bg-green-900 text-green-200' : 'bg-yellow-900 text-yellow-200'} px-2 py-1 rounded">${p.verified ? "Verified" : "Pending"}</span>
+                    </div>
+                    <p class="text-light-muted text-sm mt-1">${p.description}</p>
+                    <div class="flex flex-wrap gap-2 mt-3">
+                        <span class="text-xs bg-blue-900 text-blue-200 px-2 py-1 rounded">${p.languages}</span>
+                        <a href="${p.link}" target="_blank" class="text-xs bg-gray-700 text-gray-300 px-2 py-1 rounded hover:bg-gray-600 flex items-center gap-1"><ion-icon name="link"></ion-icon> Code</a>
+                    </div>
+                </div>`).join('');
+        } else {
+            projectsListEl.innerHTML = `<p class="text-light-muted text-center italic">No projects found on-chain.</p>`;
         }
+
     } catch(err) {
         console.error("Dashboard Load Error:", err);
+        projectsListEl.innerHTML = `<p class="text-red-400 text-center">Failed to load data. Ensure wallet is connected.</p>`;
     } finally {
         if(loader) {
             loader.classList.add('opacity-0', 'pointer-events-none');
             setTimeout(() => loader.remove(), 500);
         }
     }
+
     return projectCount;
 }
