@@ -16,7 +16,7 @@ routes = Blueprint('routes', __name__)
 w3 = Web3(Web3.HTTPProvider("https://rpc.api.moonbase.moonbeam.network"))
 CHAIN_ID = 1287
 # Ensure this matches credchain.js
-CONTRACT_ADDRESS = "0xCCc0F45E8bE87022ea3E553BdD2f64cD6aAeed79" 
+CONTRACT_ADDRESS = "0x9C9e0E1A3d2AA6C09e4E34b3dF6d96cA52FC2E97" 
 
 
 # ---------------------------------------------------------------------------

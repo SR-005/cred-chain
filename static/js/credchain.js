@@ -5,7 +5,7 @@ let contract;
 let account;
 
 // === CONFIGURATION ===
-const CONTRACT_ADDRESS = "0xCCc0F45E8bE87022ea3E553BdD2f64cD6aAeed79"; 
+const CONTRACT_ADDRESS = "0x9C9e0E1A3d2AA6C09e4E34b3dF6d96cA52FC2E97"; 
 const COMPILED_JSON_PATH = "/static/compiledcccode.json"; 
 
 // === HELPER: Load ABI ===
