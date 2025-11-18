@@ -115,49 +115,23 @@ These steps create an isolated Python virtual environment and install the requir
 | **2. Activate Virtual Environment** | **`source venv/bin/activate`** | `venv\Scripts\activate` | Activates the virtual environment session. |
 | **3. Install Dependencies** | **`pip install -r requirements.txt`** | `pip install -r requirements.txt` | Installs Python packages listed in `requirements.txt`. |
 
-### Running the Flask Backend
+### Frontend Installation 
+
+Install the necessary Node modules:
+
+```
+npm init -y
+npm install @openzeppelin/contracts
+```
+### Running the App
 
 Once dependencies are installed and the virtual environment is active:
 ```
 python3 app.py
 ```
-### Configuration (.env File)
 
-You must create a .env file in the root directory to securely store sensitive keys.
 
-1.Create a file named .env in the root project folder.
-
-2.Add your MetaMask wallet address (and other keys later) in the following format:
-
-```
-METAMASK=0xYourWalletAddressHere
-```
-### Frontend Installation and Run
-
-Install the necessary Node.js/frontend packages:
-
-```
-yarn install
-# or npm install
-```
-Smart Contract Setup (Optional)
-
-If you are performing local development or re-deploying contracts:
-
-* Navigate to the smart contract directory.
-
-* Compile and deploy the contracts to your local development environment (e.g., Hardhat or Ganache).
-
-* Update the contract address in the relevant frontend configuration file to point to your new deployment.
-
-### Run the Frontend Application
-
-Start the development server:
-```
-yarn dev
-# or npm run dev
-```
-The application will typically start at http://localhost:3000. Connect your MetaMask wallet to the Moonbase Alpha TestNet to begin using CredChain.
+The application will typically start at http://localhost:5000. Connect your MetaMask wallet to the Moonbase Alpha TestNet to begin using CredChain.
 
 ---
 
